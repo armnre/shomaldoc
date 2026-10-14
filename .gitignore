@@ -11,3 +11,6 @@ next-env.d.ts
 storage
 backups
 *.log
+
+# offline release artifacts (built locally, never committed)
+dist
