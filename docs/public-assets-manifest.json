@@ -1,0 +1,111 @@
+{
+  "generatedBy": "scripts/public-assets-manifest.mjs",
+  "note": "فهرست قابل‌راستی‌آزمایی فایل‌های public/ — مسیر، حجم، SHA-256 و امضای باینری هر فایل.",
+  "generatedAt": "2026-10-14",
+  "count": 10,
+  "totalBytes": 158133,
+  "binaryCount": 5,
+  "allSignaturesValid": true,
+  "assets": [
+    {
+      "path": "/public/branding/shomaldoc-logo.svg",
+      "url": "/branding/shomaldoc-logo.svg",
+      "bytes": 1472,
+      "sha256": "82c74cd1502daa96c4ed5aa71c408bbd364f7b3be58a52821f1c128816666b08",
+      "kind": "SVG",
+      "signatureHex": "3c737667",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/branding/shomaldoc-mark.svg",
+      "url": "/branding/shomaldoc-mark.svg",
+      "bytes": 931,
+      "sha256": "8283c63f0e91b54c6770336d8b1aa1c2340ae186087e5dbbf8c4c93a6fc007e1",
+      "kind": "SVG",
+      "signatureHex": "3c737667",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/branding/shomaldoc-maskable.svg",
+      "url": "/branding/shomaldoc-maskable.svg",
+      "bytes": 938,
+      "sha256": "93ce815f03ae2105e4d1b8d955dd547ca9fab1a23a13192bcf69a1a570480487",
+      "kind": "SVG",
+      "signatureHex": "3c737667",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/branding/university-logo.jpg",
+      "url": "/branding/university-logo.jpg",
+      "bytes": 67161,
+      "sha256": "d1eadcd1cb196b9edf6c033925ba6176b6eac8cbcad2084b1bfcc822ebe579c9",
+      "kind": "JPEG",
+      "signatureHex": "ffd8ff",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/icons/apple-touch-icon.png",
+      "url": "/icons/apple-touch-icon.png",
+      "bytes": 5094,
+      "sha256": "cdac6f42e395dd382ff8bc764711f344574b066546087507de40ef0fc9320ca7",
+      "kind": "PNG",
+      "signatureHex": "89504e470d0a1a0a",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/icons/favicon.svg",
+      "url": "/icons/favicon.svg",
+      "bytes": 832,
+      "sha256": "09d5b961cd0bd42c3485e1f4cd3a637cbce1325678c1cf9f9da9172efbf2f7ab",
+      "kind": "SVG",
+      "signatureHex": "3c737667",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/icons/icon-192.png",
+      "url": "/icons/icon-192.png",
+      "bytes": 13126,
+      "sha256": "97ea2a52dc5fdef3633d9435a1edbfa3e13630af844c83adc11553800bbf2550",
+      "kind": "PNG",
+      "signatureHex": "89504e470d0a1a0a",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/icons/icon-512.png",
+      "url": "/icons/icon-512.png",
+      "bytes": 41305,
+      "sha256": "9f9f0a28ad50accacd870c817a5ea9cb3ba181950debae81254b1d5a854c63f8",
+      "kind": "PNG",
+      "signatureHex": "89504e470d0a1a0a",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/icons/icon-maskable-512.png",
+      "url": "/icons/icon-maskable-512.png",
+      "bytes": 25598,
+      "sha256": "17178d7d91c931d694fb218e070c4536cd6be410c412ded0f0a461708b42ea1d",
+      "kind": "PNG",
+      "signatureHex": "89504e470d0a1a0a",
+      "signatureOk": true,
+      "empty": false
+    },
+    {
+      "path": "/public/sw.js",
+      "url": "/sw.js",
+      "bytes": 1676,
+      "sha256": "3b4a89f74aefb8079b00af657ff5698ac5796ab7d3e6d5f8f4ff09da70cdc4f4",
+      "kind": "JavaScript",
+      "signatureHex": null,
+      "signatureOk": true,
+      "empty": false
+    }
+  ]
+}
