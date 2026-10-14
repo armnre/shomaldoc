@@ -36,6 +36,10 @@ export const PERMISSIONS = [
   { key: "cases.events.view", groupKey: "cases", description: "مشاهده تاریخچه پرونده" },
   { key: "cases.files.upload", groupKey: "cases", description: "بارگذاری فایل" },
   { key: "cases.files.download", groupKey: "cases", description: "دانلود فایل" },
+  { key: "cases.approve_topic_group", groupKey: "cases", description: "تأیید گروهی موضوع پایان‌نامه" },
+  { key: "cases.submit_literature", groupKey: "cases", description: "ثبت و ارسال پیشینه پژوهش" },
+  { key: "forms.view", groupKey: "forms", description: "مشاهدهٔ فرم‌های پویا" },
+  { key: "forms.manage", groupKey: "forms", description: "ساخت، ویرایش و انتشار نسخهٔ فرم‌ها" },
 ] as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[number]["key"];
@@ -47,7 +51,7 @@ export const ROLES = [
     key: "student",
     nameFa: "دانشجو",
     description: "دانشجوی تحصیلات تکمیلی",
-    defaultPermissions: ["dashboard.view", "cases.view_own", "cases.create", "cases.update_own_draft", "cases.submit_topic", "cases.events.view", "cases.files.upload", "cases.files.download"],
+    defaultPermissions: ["dashboard.view", "cases.view_own", "cases.create", "cases.update_own_draft", "cases.submit_topic", "cases.submit_literature", "cases.events.view", "cases.files.upload", "cases.files.download"],
   },
   {
     key: "supervisor",
@@ -65,13 +69,13 @@ export const ROLES = [
     key: "dept_head",
     nameFa: "مدیر گروه",
     description: "مدیر گروه آموزشی",
-    defaultPermissions: ["dashboard.view", "cases.view_department", "cases.create", "cases.edit_metadata", "cases.update_assigned", "cases.review_topic", "cases.assign_supervisors", "cases.transition_status", "cases.events.view", "cases.files.download", "org.view"],
+    defaultPermissions: ["dashboard.view", "cases.view_department", "cases.create", "cases.edit_metadata", "cases.update_assigned", "cases.review_topic", "cases.approve_topic_group", "cases.assign_supervisors", "cases.transition_status", "cases.events.view", "cases.files.download", "org.view"],
   },
   {
     key: "grad_office",
     nameFa: "تحصیلات تکمیلی",
     description: "کارشناس تحصیلات تکمیلی",
-    defaultPermissions: ["dashboard.view", "cases.view_all", "cases.create", "cases.edit_metadata", "cases.update_assigned", "cases.review_topic", "cases.assign_supervisors", "cases.transition_status", "cases.archive", "cases.events.view", "cases.files.download", "org.view"],
+    defaultPermissions: ["dashboard.view", "forms.view", "cases.view_all", "cases.create", "cases.edit_metadata", "cases.update_assigned", "cases.review_topic", "cases.approve_topic_group", "cases.assign_supervisors", "cases.transition_status", "cases.archive", "cases.events.view", "cases.files.download", "org.view"],
   },
   {
     key: "finance",

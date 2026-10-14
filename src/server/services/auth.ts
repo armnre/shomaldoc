@@ -79,6 +79,8 @@ export interface LoginResult {
   token: string;
   expiresAt: Date;
   userId: string;
+  /** Id of the created session row (needed by the preview hand-off). */
+  sessionId: string;
   mustChangePassword: boolean;
 }
 
@@ -169,6 +171,7 @@ export async function loginWithPassword(
     token: session.token,
     expiresAt: session.expiresAt,
     userId: user.id,
+    sessionId: session.sessionId,
     mustChangePassword: user.mustChangePassword,
   };
 }

@@ -1,9 +1,11 @@
 import { and, count, desc, eq, inArray, isNull, or, ilike, sql } from "drizzle-orm";
 import { db, type DbLike, type DbTx } from "@/db";
 import {
+  academicTerms,
   departments,
   files,
   roles,
+  studentProfiles,
   thesisCaseAssignments,
   thesisCaseEvents,
   thesisCaseFiles,
@@ -245,6 +247,25 @@ export async function createCase(actor: CaseActor, input: CreateCaseInput, ctx: 
 
   return db.transaction(async (tx) => {
     const caseNumber = await generateCaseNumber(tx);
+    // Start term: the student's entry term when known, otherwise the term marked
+    // current. Never guessed from a timestamp — term control depends on this value.
+    let startTermId: number | null = null;
+    if (studentUserId) {
+      const [profile] = await tx
+        .select({ entryTermId: studentProfiles.entryTermId })
+        .from(studentProfiles)
+        .where(eq(studentProfiles.userId, studentUserId))
+        .limit(1);
+      startTermId = profile?.entryTermId ?? null;
+    }
+    if (startTermId === null) {
+      const [current] = await tx
+        .select({ id: academicTerms.id })
+        .from(academicTerms)
+        .where(eq(academicTerms.isCurrent, true))
+        .limit(1);
+      startTermId = current?.id ?? null;
+    }
     const [newCase] = await tx
       .insert(thesisCases)
       .values({
@@ -254,6 +275,7 @@ export async function createCase(actor: CaseActor, input: CreateCaseInput, ctx: 
         studentUserId,
         department: departmentText,
         departmentId,
+        startTermId,
         degreeLevel: input.degreeLevel ?? "کارشناسی ارشد",
         fieldOfStudy: input.fieldOfStudy ?? null,
         academicYear: input.academicYear ?? null,

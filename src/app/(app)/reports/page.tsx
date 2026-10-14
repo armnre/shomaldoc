@@ -1,12 +1,12 @@
 import { PageHeader } from "@/components/ui";
 import { ReportsPanel } from "@/components/features/security-panels";
-import { requirePagePermission } from "@/server/auth/current-user";
+import { requireCaseViewPage } from "@/server/auth/current-user";
 import { getServerI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
-  await requirePagePermission("cases.view_own");
+  await requireCaseViewPage();
   const { dict } = await getServerI18n();
   return (
     <>

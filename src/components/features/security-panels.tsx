@@ -206,6 +206,9 @@ export function ReportsPanel({ dict }: { dict: Dictionary }) {
         <a href={`/api/reports/cases?format=csv&${params()}`} className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium hover:bg-surface-2">
           {dict.reports.downloadCsv}
         </a>
+        <a href={`/api/reports/cases?format=xlsx&${params()}`} className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium hover:bg-surface-2">
+          {dict.reports.downloadXlsx}
+        </a>
         {total !== null ? <Badge tone="primary">{dict.reports.rows}: {total}</Badge> : null}
       </div>
       <p className="mt-3 text-xs text-fg-muted">{dict.reports.injectionNote}</p>

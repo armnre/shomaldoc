@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db, pool } from "@/db";
 import { permissions, rolePermissions, roles, users } from "@/db/schema";
 import { hashPassword } from "@/server/auth/password";
@@ -10,6 +10,16 @@ import { collectAccess, setRolePermission, unionPermissions } from "@/server/rba
 const suffix = randomBytes(4).toString("hex");
 const createdUserIds: string[] = [];
 const createdRoleIds: number[] = [];
+
+/**
+ * The permission catalog must exist before this suite runs: it asserts against
+ * real `permissions` rows (dashboard.view / users.view). Seeding here keeps the
+ * suite self-sufficient on a fresh database instead of depending on run order.
+ */
+beforeAll(async () => {
+  const { seedRbac } = await import("@/server/rbac/service");
+  await seedRbac();
+});
 
 async function makeActor() {
   const unique = randomBytes(4).toString("hex");
