@@ -14,3 +14,7 @@ backups
 
 # offline release artifacts (built locally, never committed)
 dist
+
+# Local snapshot archives (they contain historical copy of the tree, including old
+# demo credentials) must never be committed.
+*phase-zero-setup*.zip

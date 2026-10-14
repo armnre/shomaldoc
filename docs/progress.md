@@ -2,7 +2,7 @@
 
 ## زمان‌بندی این Task
 - **شروع: ۰۰:۰۲ UTC** — **توقف قابلیت‌افزایی: ۰۰:۵۰ UTC** — **پایان: ۰۰:۵۵ UTC** (در گزارش نهایی ثبت شد).
-- خط پایهٔ اندازه‌گیری‌شدهٔ شروع (دادهٔ واقعی، نه گزارش قبلی): `tests/unit/public-assets.test.ts` ۷ فایل/تست قرمز بود و **پوشهٔ `src/server/storage/` در مخزن وجود نداشت** (فایل‌های `storage/index.ts`, `magic-bytes.ts`, `service.ts` فقط داخل آرشیو `shomalldoc-phase-zero-setup (7).zip` بودند) → ۱۱ فایل تست و ۴۶ تست اجرا نمی‌شد یا شکست می‌خورد.
+- خط پایهٔ اندازه‌گیری‌شدهٔ شروع (دادهٔ واقعی، نه گزارش قبلی): `tests/unit/public-assets.test.ts` ۷ فایل/تست قرمز بود و **پوشهٔ `src/server/storage/` در مخزن وجود نداشت** (فایل‌های `storage/index.ts`, `magic-bytes.ts`, `service.ts` فقط داخل آرشیو اسنپ‌شات اولیه بودند) → ۱۱ فایل تست و ۴۶ تست اجرا نمی‌شد یا شکست می‌خورد. این سه فایل اکنون در همین شاخه داخل مخزن‌اند و آرشیو اسنپ‌شات (که گذرواژهٔ قدیمی پیش‌نمایش را در خود داشت) از مخزن خارج شد؛ فایل روی دیسک سندباکس باقی است.
 
 ## جدول مایل‌استون‌ها
 
@@ -101,7 +101,7 @@ node scripts/acceptance.mjs        # ۶۶/۶۶ بررسی سبز (npm run accept
 
 ```bash
 cd /home/user/shomaldoc
-unzip -o "shomaldoc-phase-zero-setup (7).zip" "src/server/storage/*" -d .   # ۱) فایل‌های storage
+ls src/server/storage/   # ۱) فایل‌های storage اینک در خود مخزن‌اند (بدون نیاز به آرشیو)
 printf 'APP_ENV=development\nDATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/app_db\nUPLOAD_DIR=./storage/uploads\nLOG_LEVEL=info\nALLOW_EMBED=1\n' > .env
 mkdir -p storage/uploads
 npm install --no-audit --no-fund                                              # ۲) وابستگی‌ها (~۵۶۴ بسته)
