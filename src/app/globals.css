@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                        */
+/* Raw values live in :root / [data-theme=dark] (CSS variables).        */
+/* Tailwind utilities (bg-surface, text-fg, border-border, …) map to    */
+/* them below, so components never hard-code colors or sizes.          */
+/* ------------------------------------------------------------------ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Vazirmatn Variable", "Vazirmatn", Tahoma, system-ui, sans-serif;
+
+  /* Brand palette (navy from the university mark, sun-orange accent, sea-teal) */
+  --color-navy-50: #eef0fa;
+  --color-navy-100: #d9ddf2;
+  --color-navy-200: #b3bbe4;
+  --color-navy-500: #3a4fa6;
+  --color-navy-600: #2c3f92;
+  --color-navy-700: #222f74;
+  --color-navy-800: #1a2459;
+  --color-navy-900: #121a42;
+  --color-lavender: #c9c8f2;
+  --color-gold-50: #fdf3e4;
+  --color-gold-500: #e07c1f;
+  --color-gold-600: #bf6512;
+  --color-teal-50: #e3f5f5;
+  --color-teal-500: #15909a;
+  --color-teal-600: #0e7880;
+  --color-wave: #2f6db5;
+
+  /* Semantic colors (values come from CSS variables so they switch with theme) */
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-inverse: var(--c-surface-inverse);
+  --color-fg: var(--c-fg);
+  --color-fg-muted: var(--c-fg-muted);
+  --color-fg-inverse: var(--c-fg-inverse);
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-fg: var(--c-primary-fg);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-accent: var(--c-accent);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-fg: var(--c-accent-fg);
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-warning: var(--c-warning);
+  --color-warning-soft: var(--c-warning-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-info: var(--c-info);
+  --color-info-soft: var(--c-info-soft);
+  --color-ring: var(--c-ring);
+
+  /* Shape, depth, motion */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.5rem;
+  --shadow-soft: 0 1px 2px rgb(18 26 66 / 0.06), 0 6px 20px rgb(18 26 66 / 0.07);
+  --shadow-lift: 0 2px 4px rgb(18 26 66 / 0.06), 0 18px 44px rgb(18 26 66 / 0.16);
+  --shadow-glow: 0 0 0 1px rgb(224 124 31 / 0.25), 0 10px 30px rgb(224 124 31 / 0.25);
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --animate-fade-up: fade-up 0.55s var(--ease-soft) both;
+  --animate-fade-in: fade-in 0.4s ease-out both;
+  --animate-pop: pop 0.25s var(--ease-soft) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --z-dropdown: 40;
+  --z-sticky: 30;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+}
+
+:root {
+  color-scheme: light;
+  --c-bg: #f8f5ee;
+  --c-surface: #ffffff;
+  --c-surface-2: #f3efe4;
+  --c-surface-inverse: #121a42;
+  --c-fg: #1b2135;
+  --c-fg-muted: #5a6175;
+  --c-fg-inverse: #f5f2ea;
+  --c-border: #e6e0d1;
+  --c-border-strong: #cfc6b1;
+  --c-primary: #222f74;
+  --c-primary-hover: #1a2459;
+  --c-primary-fg: #ffffff;
+  --c-primary-soft: #e6e9f6;
+  --c-accent: #e07c1f;
+  --c-accent-soft: #fdf0de;
+  --c-accent-fg: #5c2e00;
+  --c-success: #0c6e58;
+  --c-success-soft: #dcf3ea;
+  --c-warning: #8a4b06;
+  --c-warning-soft: #fcebd3;
+  --c-danger: #a8261b;
+  --c-danger-soft: #fbe4e1;
+  --c-info: #2c3f92;
+  --c-info-soft: #e4e8f7;
+  --c-ring: #15909a;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: #0c1230;
+  --c-surface: #141c40;
+  --c-surface-2: #1b2550;
+  --c-surface-inverse: #f5f2ea;
+  --c-fg: #eef0f8;
+  --c-fg-muted: #a6aecb;
+  --c-fg-inverse: #121a42;
+  --c-border: #29325f;
+  --c-border-strong: #3b4779;
+  --c-primary: #8b9cf2;
+  --c-primary-hover: #a3b1f7;
+  --c-primary-fg: #0c1230;
+  --c-primary-soft: #232e62;
+  --c-accent: #f0a050;
+  --c-accent-soft: #3a2a14;
+  --c-accent-fg: #ffd9a8;
+  --c-success: #5fd3b1;
+  --c-success-soft: #123a31;
+  --c-warning: #f5b56b;
+  --c-warning-soft: #3d2c12;
+  --c-danger: #ff8a7d;
+  --c-danger-soft: #3f1a17;
+  --c-info: #a9b6ff;
+  --c-info-soft: #1f2a5c;
+  --c-ring: #5fd0d8;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    line-height: 1.8;
+    font-feature-settings: "ss01" 0;
+  }
+
+  /* Tabular figures keep numeric columns aligned in tables and stats. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--c-ring);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--c-accent-soft);
+    color: var(--c-accent-fg);
+  }
+
+  /* Touch targets: at least 44px on coarse pointers. */
+  @media (pointer: coarse) {
+    button,
+    a,
+    [role="button"] {
+      min-height: 44px;
+    }
+  }
+}
+
+@layer components {
+  /* Subtle Caspian-wave texture used behind hero panels and the app canvas. */
+  .bg-waves {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='80' viewBox='0 0 160 80'%3E%3Cpath d='M0 40 Q20 20 40 40 T80 40 T120 40 T160 40' fill='none' stroke='%23ffffff' stroke-opacity='0.12' stroke-width='1.5'/%3E%3Cpath d='M0 62 Q20 42 40 62 T80 62 T120 62 T160 62' fill='none' stroke='%23ffffff' stroke-opacity='0.08' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-size: 160px 80px;
+  }
+
+  .bg-waves-dim {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='80' viewBox='0 0 160 80'%3E%3Cpath d='M0 40 Q20 20 40 40 T80 40 T120 40 T160 40' fill='none' stroke='%231a2459' stroke-opacity='0.06' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-size: 160px 80px;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--c-surface-2) 25%,
+      var(--c-border) 50%,
+      var(--c-surface-2) 75%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  .animate-in {
+    animation: var(--animate-fade-up);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

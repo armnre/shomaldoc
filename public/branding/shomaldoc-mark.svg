@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="shd-mark-title">
+  <title id="shd-mark-title">شمال‌داک</title>
+  <defs>
+    <linearGradient id="shd-bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#222F74"/>
+      <stop offset="1" stop-color="#0E7880"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#shd-bg)"/>
+  <path d="M16 11h22l9 9v33a1 1 0 0 1-1 1H16a1 1 0 0 1-1-1V12a1 1 0 0 1 1-1z" fill="#F8F5EE"/>
+  <path d="M38 11v9h9z" fill="#C9C8F2"/>
+  <path d="M32 19l2.2 6.8L41 28l-6.8 2.2L32 37l-2.2-6.8L23 28l6.8-2.2z" fill="#E07C1F"/>
+  <path d="M21 42q3.5-3 7 0t7 0 7 0 7 0" fill="none" stroke="#0E7880" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M21 48q3.5-3 7 0t7 0 7 0 7 0" fill="none" stroke="#2F6DB5" stroke-width="2.6" stroke-linecap="round"/>
+</svg>

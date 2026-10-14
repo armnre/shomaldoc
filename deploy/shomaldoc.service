@@ -1,0 +1,30 @@
+[Unit]
+Description=ShomalDoc (شمال‌داک) — thesis management
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shomaldoc
+Group=shomaldoc
+WorkingDirectory=/opt/shomaldoc/current
+EnvironmentFile=/etc/shomaldoc/app.env
+Environment=NODE_ENV=production
+Environment=PORT=3080
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/opt/shomaldoc/node/current/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3080
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/opt/shomaldoc/shared /opt/shomaldoc/releases
+
+[Install]
+WantedBy=multi-user.target
