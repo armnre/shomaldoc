@@ -8,7 +8,9 @@ next-env.d.ts
 .env
 .env.local
 .env.*.local
-storage
+# Runtime uploads at the project root only. Keep the leading slash: an unanchored
+# `storage` also matched src/server/storage/, so that module never reached Git.
+/storage
 backups
 *.log
 
