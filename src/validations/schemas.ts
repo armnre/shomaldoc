@@ -340,6 +340,187 @@ export const reportQuerySchema = z.object({
   status: z.string().trim().max(40).optional(),
   from: z.string().trim().max(40).optional(),
   to: z.string().trim().max(40).optional(),
-  format: z.enum(["json", "csv"]).default("json"),
+  format: z.enum(["json", "csv", "xlsx"]).default("json"),
 });
 export type ReportQuery = z.output<typeof reportQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// M4: versioned topic and literature review
+// ---------------------------------------------------------------------------
+
+export const topicVersionSchema = z.object({
+  titleFa: z.string().trim().min(5, "عنوان فارسی باید حداقل ۵ نویسه باشد.").max(500),
+  titleEn: z.string().trim().max(500).nullable().optional(),
+  keywords: z.string().trim().max(500).nullable().optional(),
+  description: z.string().trim().max(4000).nullable().optional(),
+  fileId: z.string().uuid("شناسهٔ فایل معتبر نیست.").nullable().optional(),
+  changeReason: z.string().trim().max(1000).nullable().optional(),
+  submitForReview: z.boolean().default(true),
+});
+export type TopicVersionInputPayload = z.output<typeof topicVersionSchema>;
+
+export const topicDecisionSchema = z.object({
+  decision: z.enum(["approve_supervisor", "approve_group", "request_revision", "reject"]),
+  reason: z.string().trim().max(1000).nullable().optional(),
+});
+export type TopicDecisionPayload = z.output<typeof topicDecisionSchema>;
+
+export const literatureVersionSchema = z.object({
+  summaryFa: z.string().trim().min(50, "خلاصهٔ پیشینه پژوهش باید حداقل ۵۰ نویسه باشد.").max(20000),
+  objectivesFa: z.string().trim().max(4000).nullable().optional(),
+  gapFa: z.string().trim().max(4000).nullable().optional(),
+  keywords: z.string().trim().max(500).nullable().optional(),
+  referencesCount: z.coerce.number().int().min(0).max(2000).nullable().optional(),
+  fileId: z.string().uuid("شناسهٔ فایل معتبر نیست.").nullable().optional(),
+});
+export type LiteratureVersionPayload = z.output<typeof literatureVersionSchema>;
+
+export const literatureDecisionSchema = z.object({
+  decision: z.enum(["approve", "request_revision", "reject"]),
+  reason: z.string().trim().max(1000).nullable().optional(),
+});
+export type LiteratureDecisionPayload = z.output<typeof literatureDecisionSchema>;
+
+// ---------------------------------------------------------------------------
+// M5: dynamic forms and proposal answers
+// ---------------------------------------------------------------------------
+
+export const formFieldSchema = z.object({
+  fieldKey: z.string().trim().regex(/^[a-z][a-z0-9_]{1,58}$/, "کلید فیلد باید با حرف کوچک لاتین شروع شود."),
+  labelFa: z.string().trim().min(2).max(200),
+  fieldType: z.enum(["text", "textarea", "number", "select", "radio", "checkbox", "date"]),
+  isRequired: z.boolean().default(false),
+  orderIndex: z.coerce.number().int().min(0).max(500).optional(),
+  placeholderFa: z.string().trim().max(200).nullable().optional(),
+  helpFa: z.string().trim().max(1000).nullable().optional(),
+  options: z.array(z.string().trim().min(1).max(200)).max(100).nullable().optional(),
+  validation: z.record(z.string(), z.union([z.number(), z.string()])).nullable().optional(),
+  visibleWhen: z
+    .object({ fieldKey: z.string().trim().min(1).max(60), equals: z.string().max(200).optional(), notEquals: z.string().max(200).optional() })
+    .nullable()
+    .optional(),
+  isActive: z.boolean().default(true),
+});
+
+export const formDefinitionSchema = z.object({
+  code: z.string().trim().regex(/^[a-z][a-z0-9_]{1,58}$/, "کد فرم باید با حرف کوچک لاتین شروع شود."),
+  titleFa: z.string().trim().min(2).max(200),
+  descriptionFa: z.string().trim().max(2000).nullable().optional(),
+  stageKey: z.string().trim().max(40).nullable().optional(),
+  fields: z.array(formFieldSchema).min(1, "فرم باید حداقل یک فیلد داشته باشد.").max(200),
+});
+
+export const formFieldsSchema = z.object({
+  fields: z.array(formFieldSchema).max(200),
+});
+
+export const proposalAnswersSchema = z.object({
+  code: z.string().trim().min(1).max(60).default("proposal"),
+  answers: z.record(z.string(), z.unknown()),
+  submitForReview: z.boolean().default(false),
+  attachmentFileId: z.string().uuid().nullable().optional(),
+});
+
+export const proposalDecisionSchema = z.object({
+  decision: z.enum(["approve", "request_revision", "reject"]),
+  reason: z.string().trim().max(1000).nullable().optional(),
+});
+
+export const irandocSubmissionSchema = z.object({
+  trackingCode: z.string().trim().min(3).max(60),
+  registeredAt: z.string().trim().min(4).max(40).nullable().optional(),
+  receiptFileId: z.string().uuid().nullable().optional(),
+  certificateFileId: z.string().uuid().nullable().optional(),
+});
+
+export const irandocDecisionSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  reason: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const extensionRequestSchema = z.object({
+  termId: z.number().int().positive().nullable().optional(),
+  requestedTerms: z.number().int().min(1).max(12),
+  reason: z.string().trim().min(5).max(2000),
+  fileId: z.string().uuid().nullable().optional(),
+});
+
+export const extensionDecisionSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  reason: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const committeeMemberSchema = z.object({
+  userId: z.string().uuid().nullable().optional(),
+  fullName: z.string().trim().max(200).nullable().optional(),
+  roleType: z.enum(["supervisor", "advisor", "internal", "external", "chair"]).default("internal"),
+  isPresent: z.boolean().optional(),
+  note: z.string().trim().max(500).nullable().optional(),
+});
+
+export const committeeMeetingSchema = z.object({
+  meetingType: z.enum(["proposal_defense", "pre_defense", "final_defense"]),
+  scheduledAt: z.string().trim().min(4).max(40),
+  location: z.string().trim().max(200).nullable().optional(),
+  members: z.array(committeeMemberSchema).min(1).max(12),
+});
+
+export const committeeOutcomeSchema = z.object({
+  status: z.enum(["held", "cancelled"]),
+  result: z.enum(["passed", "revision_required", "rejected"]).nullable().optional(),
+  minutesFa: z.string().trim().max(20000).nullable().optional(),
+  fileId: z.string().uuid().nullable().optional(),
+  attendance: z.array(z.object({ memberId: z.string().uuid(), isPresent: z.boolean() })).max(20).optional(),
+  note: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const financeRecordSchema = z.object({
+  kind: z.enum(["defense_fee", "extension_fee", "tuition", "other"]),
+  amount: z.number().int().min(0).max(1_000_000_000_000),
+  note: z.string().trim().max(2000).nullable().optional(),
+  receiptFileId: z.string().uuid().nullable().optional(),
+});
+
+export const financeSettleSchema = z.object({
+  status: z.enum(["paid", "waived"]),
+  reason: z.string().trim().max(2000).nullable().optional(),
+  receiptFileId: z.string().uuid().nullable().optional(),
+});
+
+export const thesisVersionSchema = z.object({
+  fileId: z.string().uuid(),
+  titleFa: z.string().trim().max(300).nullable().optional(),
+  changeReason: z.string().trim().max(2000).nullable().optional(),
+  submitForReview: z.boolean().default(true),
+});
+
+export const similarityCheckSchema = z.object({
+  similarityPercent: z.number().int().min(0).max(100),
+  reportId: z.string().trim().max(80).nullable().optional(),
+  certificateFileId: z.string().uuid().nullable().optional(),
+  checkedAt: z.string().trim().max(40).nullable().optional(),
+});
+
+export const thesisVersionDecisionSchema = z.object({
+  decision: z.enum(["approve", "request_revision", "reject"]),
+  reason: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const graduationRequestSchema = z.object({
+  thesisVersionId: z.string().uuid().nullable().optional(),
+  fileId: z.string().uuid().nullable().optional(),
+  note: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const graduationDecisionSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  reason: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const caseCloseSchema = z.object({
+  reason: z.string().trim().min(5).max(2000),
+});
+
+export const searchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(80),
+});

@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { irandocRecords, proposals, similarityChecks, thesisCases, thesisSupervisors } from "@/db/schema";
+import { caseClosures, committeeMeetings, financeRecords, graduationRecords, irandocRecords, proposals, similarityChecks, thesisCases, thesisSupervisors, thesisVersions, topicVersions } from "@/db/schema";
 import { getSettingValue } from "../services/settings";
 
 /**
@@ -35,6 +35,8 @@ export interface CaseFacts {
   financeRequired: boolean;
   defenseCompleted: boolean;
   graduationApproved: boolean;
+  /** True when a closure record exists for the case. */
+  closed?: boolean;
   thesisFinalUploaded: boolean;
 }
 
@@ -126,11 +128,22 @@ export async function loadCaseFacts(caseId: string): Promise<CaseFacts | null> {
   const [tc] = await db.select().from(thesisCases).where(eq(thesisCases.id, caseId)).limit(1);
   if (!tc) return null;
 
-  const [supervisors, proposal, irandoc, similarity] = await Promise.all([
+  const [supervisors, proposal, irandoc, similarity, versions, pendingFinance, graduations, defenses, closures] = await Promise.all([
     db.select().from(thesisSupervisors).where(eq(thesisSupervisors.caseId, caseId)),
     db.select().from(proposals).where(and(eq(proposals.caseId, caseId), eq(proposals.isActive, true))).orderBy(desc(proposals.version)).limit(1),
     db.select().from(irandocRecords).where(eq(irandocRecords.caseId, caseId)).orderBy(desc(irandocRecords.createdAt)).limit(1),
     db.select().from(similarityChecks).where(eq(similarityChecks.caseId, caseId)).orderBy(desc(similarityChecks.createdAt)).limit(1),
+    // The final thesis file is a recorded version whose file still exists — never assumed.
+    db.select({ id: thesisVersions.id, status: thesisVersions.status }).from(thesisVersions).where(eq(thesisVersions.caseId, caseId)),
+    db.select({ id: financeRecords.id }).from(financeRecords).where(and(eq(financeRecords.caseId, caseId), eq(financeRecords.status, "pending"))).limit(1),
+    db.select({ status: graduationRecords.status }).from(graduationRecords).where(eq(graduationRecords.caseId, caseId)).orderBy(desc(graduationRecords.createdAt)).limit(1),
+    // The defense is completed only when a real held final-defense session exists.
+    db
+      .select({ id: committeeMeetings.id, result: committeeMeetings.result })
+      .from(committeeMeetings)
+      .where(and(eq(committeeMeetings.caseId, caseId), eq(committeeMeetings.status, "held"), eq(committeeMeetings.meetingType, "final_defense")))
+      .limit(5),
+    db.select({ id: caseClosures.id }).from(caseClosures).where(eq(caseClosures.caseId, caseId)).limit(1),
   ]);
 
   const [advisorRequired, minMonths, maxTerms] = await Promise.all([
@@ -145,7 +158,17 @@ export async function loadCaseFacts(caseId: string): Promise<CaseFacts | null> {
   const months = (Date.now() - tc.createdAt.getTime()) / (30 * 86_400_000);
   const termsUsed = Math.max(1, Math.ceil(months / 4));
 
-  const topicApproved = ["approved", "TOPIC_APPROVED", "under_review"].includes(tc.currentStatus) || tc.currentStatus === "approved";
+  // The topic counts as approved when a real approved record exists: either an active
+  // approved topic version (M4) or an approved proposal (M5). Never inferred from a
+  // status string alone.
+  const [approvedTopic] = await Promise.all([
+    db
+      .select({ id: topicVersions.id })
+      .from(topicVersions)
+      .where(and(eq(topicVersions.caseId, caseId), eq(topicVersions.isActive, true), eq(topicVersions.status, "approved")))
+      .limit(1),
+  ]);
+  const topicApproved = approvedTopic.length > 0 || proposal[0]?.status === "approved";
 
   return {
     caseId,
@@ -163,11 +186,14 @@ export async function loadCaseFacts(caseId: string): Promise<CaseFacts | null> {
     termsUsed,
     // Finance clearance is not modelled yet: reported as unknown, which denies
     // when finance is required rather than inventing a clearance.
-    financeCleared: null,
-    financeRequired: false,
-    defenseCompleted: ["DEFENSE_COMPLETED", "THESIS_COMPLETED", "GRADUATION_PROCESS"].includes(tc.currentStatus),
-    graduationApproved: tc.currentStatus === "GRADUATION_PROCESS",
-    thesisFinalUploaded: false,
+    // A case with a pending finance row is not cleared; with none recorded, money is
+    // not a blocker (the university may bill outside the system).
+    financeCleared: pendingFinance.length === 0,
+    financeRequired: pendingFinance.length > 0,
+    defenseCompleted: defenses.some((d) => d.result === "passed"),
+    graduationApproved: graduations[0]?.status === "approved",
+    closed: closures.length > 0,
+    thesisFinalUploaded: versions.some((v) => v.status === "submitted" || v.status === "approved"),
   };
 }
 

@@ -28,12 +28,35 @@ export const SETTING_DEFS = {
   "defense.minMonthsAfterProposal": { type: "number", defaultValue: 4, min: 0, max: 36, label: "حداقل فاصلهٔ تصویب پروپوزال تا دفاع (ماه)" },
   "similarity.maxPercent": { type: "number", defaultValue: 30, min: 1, max: 100, label: "سقف درصد همانندجویی" },
   "terms.maxAllowed": { type: "number", defaultValue: 6, min: 1, max: 24, label: "سقف ترم مجاز پایان‌نامه" },
+  // M4: how far into the cycle the topic may still be changed (with a reason).
+  "topic.changeAllowedUntil": {
+    type: "string",
+    defaultValue: "approved",
+    min: 2,
+    max: 40,
+    label: "آخرین وضعیتی که تغییر موضوع تا آن مجاز است (مثال: approved/submitted/under_review)",
+  },
+  "topic.requireFileOnChange": { type: "boolean", defaultValue: false, min: 0, max: 1, label: "الزامی‌بودن فایل برای تغییر موضوع" },
+  "literature.minReferences": { type: "number", defaultValue: 15, min: 0, max: 500, label: "حداقل تعداد منابع در پیشینه پژوهش" },
   // M11: scheduler + reminders
   "scheduler.enabled": { type: "boolean", defaultValue: true, min: 0, max: 1, label: "فعال‌بودن زمان‌بند خودکار" },
   "scheduler.intervalMinutes": { type: "number", defaultValue: 15, min: 1, max: 1440, label: "دورهٔ اجرای زمان‌بند (دقیقه)" },
   "notify.reminderDay1": { type: "boolean", defaultValue: true, min: 0, max: 1, label: "یادآوری روز اول سررسید" },
   "notify.reminderDay3": { type: "boolean", defaultValue: true, min: 0, max: 1, label: "یادآوری روز سوم" },
   "notify.escalationDay5": { type: "boolean", defaultValue: true, min: 0, max: 1, label: "ارتقا به نقش بالاتر در روز پنجم" },
+  // Thresholds live in Settings so no day count is hard-coded in the scheduler.
+  "notify.reminderDay1AfterDays": { type: "number", defaultValue: 1, min: 1, max: 60, label: "آستانهٔ یادآوری اول (روز پس از سررسید)" },
+  "notify.reminderDay3AfterDays": { type: "number", defaultValue: 3, min: 1, max: 90, label: "آستانهٔ یادآوری دوم (روز پس از سررسید)" },
+  "notify.escalationAfterDays": { type: "number", defaultValue: 5, min: 1, max: 180, label: "آستانهٔ ارتقای اقدام (روز پس از سررسید)" },
+  "notify.escalationRole": { type: "string", defaultValue: "grad_office", min: 2, max: 64, label: "نقش مقصد ارتقا (وقتی گذار نقش مقصد تعریف نکرده باشد)" },
+  "notify.termControlRole": { type: "string", defaultValue: "grad_office", min: 2, max: 64, label: "نقش گیرندهٔ هشدار کنترل ترم" },
+  // M7: extension, committee and finance rules — nothing hard-coded in the services.
+  "extension.maxExtraTerms": { type: "number", defaultValue: 2, min: 0, max: 12, label: "حداکثر ترم تمدید قابل درخواست در کل دوره" },
+  "extension.requiresFile": { type: "boolean", defaultValue: false, min: 0, max: 1, label: "الزامی‌بودن فایل برای درخواست تمدید" },
+  "committee.minMembers": { type: "number", defaultValue: 3, min: 1, max: 9, label: "حداقل تعداد اعضای کمیسیون/هیئت دفاع" },
+  "committee.requireMinutes": { type: "boolean", defaultValue: true, min: 0, max: 1, label: "الزامی‌بودن صورت‌جلسه هنگام ثبت نتیجهٔ جلسه" },
+  "finance.currency": { type: "string", defaultValue: "IRR", min: 2, max: 10, label: "واحد پول سامانه (مثال: IRR/IRT)" },
+  "finance.defenseFeeAmount": { type: "number", defaultValue: 0, min: 0, max: 1000000000, label: "تعرفهٔ پیش‌فرض هزینهٔ دفاع (۰ = بدون تعرفه)" },
   "notify.channels.email": { type: "boolean", defaultValue: false, min: 0, max: 1, label: "کانال ایمیل (بدون کلید واقعی غیرفعال می‌ماند)" },
   "notify.channels.sms": { type: "boolean", defaultValue: false, min: 0, max: 1, label: "کانال پیامک (بدون کلید واقعی غیرفعال می‌ماند)" },
 } as const;

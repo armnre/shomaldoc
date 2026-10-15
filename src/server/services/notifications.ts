@@ -28,11 +28,20 @@ export interface NotifyInput {
   caseId?: string | null;
   taskId?: string | null;
   link?: string | null;
+  /**
+   * Idempotency key. When set, a second notification with the same
+   * (userId, dedupeKey) is silently ignored and `null` is returned, which keeps
+   * repeated scheduler ticks from duplicating reminders.
+   */
+  dedupeKey?: string | null;
   channels?: NotificationChannel[];
 }
 
-/** Writes the notification and logs each channel attempt. Runs inside `executor`. */
-export async function notify(input: NotifyInput, executor: DbTx | typeof db = db): Promise<string> {
+/**
+ * Writes the notification and logs each channel attempt. Runs inside `executor`.
+ * Returns the notification id, or `null` when `dedupeKey` already existed.
+ */
+export async function notify(input: NotifyInput, executor: DbTx | typeof db = db): Promise<string | null> {
   const [row] = await executor
     .insert(notifications)
     .values({
@@ -43,8 +52,11 @@ export async function notify(input: NotifyInput, executor: DbTx | typeof db = db
       caseId: input.caseId ?? null,
       taskId: input.taskId ?? null,
       link: input.link ?? null,
+      dedupeKey: input.dedupeKey ?? null,
     })
+    .onConflictDoNothing({ target: [notifications.userId, notifications.dedupeKey] })
     .returning({ id: notifications.id });
+  if (!row) return null;
 
   const channels = input.channels ?? ["inapp"];
   for (const channel of channels) {

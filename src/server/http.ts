@@ -73,6 +73,27 @@ export async function parseJson<S extends z.ZodType>(request: Request, schema: S
  * CSRF defence in depth: session cookies are SameSite=Lax and API bodies must be JSON,
  * and in addition a browser-sent Origin must match the host this request was made to.
  */
+/**
+ * Whether the browser reached us over TLS. Behind the Plesk/Plesk-like reverse
+ * proxy the app itself only sees http, so the proxy's `X-Forwarded-Proto` is the
+ * authoritative signal. Used to pick cookie attributes that the browser will
+ * actually store (a `Secure` cookie is dropped on a plain-http origin).
+ */
+export function isSecureRequest(request: Request): boolean {
+  const forwarded = request.headers.get("x-forwarded-proto");
+  if (forwarded) return forwarded.split(",")[0].trim().toLowerCase() === "https";
+  try {
+    return new URL(request.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/** Client IP as seen through the reverse proxy (audit + rate limiting). */
+export function getForwardedProto(request: Request): string {
+  return request.headers.get("x-forwarded-proto")?.split(",")[0].trim().toLowerCase() ?? "direct";
+}
+
 export function assertSameOrigin(request: Request): void {
   const origin = request.headers.get("origin");
   if (!origin) return;

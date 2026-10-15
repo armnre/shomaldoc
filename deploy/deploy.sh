@@ -21,11 +21,15 @@ fi
 # A writable build cache prevents EACCES failures under systemd hardening.
 mkdir -p "$NEW/.next/cache"
 if [ "$(id -u)" -eq 0 ]; then chown -R shomaldoc:shomaldoc "$NEW/.next/cache"; fi
-npm ci --no-audit --no-fund
+# The build needs dev dependencies (tailwind/postcss/typescript); app.env exports
+# NODE_ENV=production, which would otherwise make npm skip them.
+npm ci --include=dev --no-audit --no-fund
 npm run build
 bash deploy/backup-db.sh
 npm run db:migrate
 npm run db:seed-rbac
+npm run db:seed-forms
+npm run db:seed-prod
 # Bootstrap is a critical step: its failure must abort the deploy, never be swallowed.
 if [ -f "${BOOTSTRAP_FILE:-/etc/shomaldoc/bootstrap.env}" ]; then
   echo "bootstrap: creating initial administrator (one-time)"

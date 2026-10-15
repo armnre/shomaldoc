@@ -1,4 +1,5 @@
 import {
+  bigint,
   bigserial,
   boolean,
   index,
@@ -97,6 +98,30 @@ export const sessions = pgTable(
     userAgent: text("user_agent"),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+/**
+ * Short-lived, single-use tokens that transfer an already-established session into a
+ * browser context that can actually store cookies (see src/app/api/auth/handoff).
+ * Preview-only: the login route issues them just for the embedded live preview, where
+ * a sandboxed iframe refuses to keep the session cookie.
+ */
+export const loginHandoffs = pgTable(
+  "login_handoffs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (t) => [index("login_handoffs_expires_idx").on(t.expiresAt)],
 );
 
 export const auditLogs = pgTable(
@@ -208,6 +233,11 @@ export const thesisCases = pgTable(
     department: varchar("department", { length: 120 }),
     /** FK to the organisational model (Phase 3); backfilled from the legacy text value when it matches a department. */
     departmentId: integer("department_id").references(() => departments.id, { onDelete: "set null" }),
+    /**
+     * Term in which the case started (authoritative input for term control).
+     * Backfilled from the student's entry term; never inferred from timestamps.
+     */
+    startTermId: integer("start_term_id").references(() => academicTerms.id, { onDelete: "set null" }),
     degreeLevel: varchar("degree_level", { length: 30 }).notNull().default("کارشناسی ارشد"),
     fieldOfStudy: varchar("field_of_study", { length: 150 }),
     academicYear: varchar("academic_year", { length: 10 }),
@@ -671,6 +701,210 @@ export const similarityChecks = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// M4: versioned topic and literature review
+// Versions are append-only: a correction creates a new row and never rewrites
+// history. Exactly one version is `is_active` per case (partial unique index).
+// ---------------------------------------------------------------------------
+
+export const topicVersions = pgTable(
+  "topic_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => thesisCases.id, { onDelete: "cascade" }),
+    /** 1-based, monotonically increasing per case. */
+    version: integer("version").notNull(),
+    titleFa: text("title_fa").notNull(),
+    titleEn: text("title_en"),
+    keywords: text("keywords"),
+    description: text("description"),
+    /** draft | pending_supervisor | pending_group | approved | revision_required | rejected */
+    status: varchar("status", { length: 24 }).notNull().default("draft"),
+    /** Only one approved (active) version per case — enforced by a partial unique index. */
+    isActive: boolean("is_active").notNull().default(false),
+    /** Case status when this version was submitted; drives the "change allowed until" setting. */
+    stageAtSubmission: varchar("stage_at_submission", { length: 40 }),
+    /** Mandatory explanation for "change topic" after approval. */
+    changeReason: text("change_reason"),
+    /** Optional supporting document (kept in `files`, never duplicated). */
+    fileId: uuid("file_id").references(() => files.id, { onDelete: "set null" }),
+    submittedBy: uuid("submitted_by").references(() => users.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    /** supervisor | group — which approval level the version is waiting for. */
+    reviewStage: varchar("review_stage", { length: 20 }),
+    supervisorDecisionAt: timestamp("supervisor_decision_at", { withTimezone: true }),
+    supervisorDecidedBy: uuid("supervisor_decided_by").references(() => users.id, { onDelete: "set null" }),
+    groupDecisionAt: timestamp("group_decision_at", { withTimezone: true }),
+    groupDecidedBy: uuid("group_decided_by").references(() => users.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
+    /** Mandatory for revision_required / rejected. */
+    decisionReason: text("decision_reason"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("topic_versions_case_version_idx").on(t.caseId, t.version),
+    uniqueIndex("topic_versions_active_idx").on(t.caseId).where(sql`${t.isActive} = true`),
+    index("topic_versions_case_idx").on(t.caseId),
+  ],
+);
+
+/** A literature-review round. One active round per case at a time. */
+export const literatureReviews = pgTable(
+  "literature_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => thesisCases.id, { onDelete: "cascade" }),
+    /** approved | in_review | revision_required | rejected */
+    status: varchar("status", { length: 24 }).notNull().default("in_review"),
+    isActive: boolean("is_active").notNull().default(false),
+    rounds: integer("rounds").notNull().default(0),
+    openedBy: uuid("opened_by").references(() => users.id, { onDelete: "set null" }),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("literature_reviews_case_idx").on(t.caseId),
+    uniqueIndex("literature_reviews_active_idx").on(t.caseId).where(sql`${t.isActive} = true`),
+  ],
+);
+
+export const literatureReviewVersions = pgTable(
+  "literature_review_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reviewId: uuid("review_id")
+      .notNull()
+      .references(() => literatureReviews.id, { onDelete: "cascade" }),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => thesisCases.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    /** Structured content of the review (sections are free text, never invented). */
+    summaryFa: text("summary_fa").notNull(),
+    objectivesFa: text("objectives_fa"),
+    gapFa: text("gap_fa"),
+    keywords: text("keywords"),
+    /** Number of cited sources as reported by the student. */
+    referencesCount: integer("references_count"),
+    fileId: uuid("file_id").references(() => files.id, { onDelete: "set null" }),
+    /** submitted | approved | revision_required | rejected */
+    status: varchar("status", { length: 24 }).notNull().default("submitted"),
+    submittedBy: uuid("submitted_by").references(() => users.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    decisionReason: text("decision_reason"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("literature_review_versions_review_version_idx").on(t.reviewId, t.version),
+    index("literature_review_versions_case_idx").on(t.caseId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// M5: dynamic form definitions (versioned) and proposal versions
+// A published definition version is immutable: editing publishes a new version,
+// so answers already recorded keep pointing at the fields they were given for.
+// ---------------------------------------------------------------------------
+
+export const dynamicFormDefinitions = pgTable(
+  "dynamic_form_definitions",
+  {
+    id: serial("id").primaryKey(),
+    /** Stable identity across versions (e.g. `proposal`, `extension`, `graduation`). */
+    code: varchar("code", { length: 60 }).notNull(),
+    titleFa: varchar("title_fa", { length: 200 }).notNull(),
+    descriptionFa: text("description_fa"),
+    version: integer("version").notNull().default(1),
+    /** Published versions are the ones a student form may render. */
+    isPublished: boolean("is_published").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
+    /** Which case stage this form belongs to (draft, THESIS_ACTIVE, …). */
+    stageKey: varchar("stage_key", { length: 40 }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    publishedBy: uuid("published_by").references(() => users.id, { onDelete: "set null" }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("dynamic_form_definitions_code_version_idx").on(t.code, t.version),
+    index("dynamic_form_definitions_code_idx").on(t.code),
+  ],
+);
+
+export const dynamicFormFields = pgTable(
+  "dynamic_form_fields",
+  {
+    id: serial("id").primaryKey(),
+    definitionId: integer("definition_id")
+      .notNull()
+      .references(() => dynamicFormDefinitions.id, { onDelete: "cascade" }),
+    /** Machine key used in answer payloads; unique inside its definition. */
+    fieldKey: varchar("field_key", { length: 60 }).notNull(),
+    labelFa: varchar("label_fa", { length: 200 }).notNull(),
+    fieldType: varchar("field_type", { length: 30 }).notNull(),
+    isRequired: boolean("is_required").notNull().default(false),
+    orderIndex: integer("order_index").notNull().default(0),
+    placeholderFa: varchar("placeholder_fa", { length: 200 }),
+    helpFa: text("help_fa"),
+    /** Choice list for select/radio/checkbox types — never invented, always explicit. */
+    options: jsonb("options").$type<string[] | null>(),
+    /** { minLength, maxLength, min, max, pattern } — validated server-side. */
+    validation: jsonb("validation").$type<Record<string, number | string> | null>(),
+    /** Simple conditional display: { fieldKey, equals, notEquals } */
+    visibleWhen: jsonb("visible_when").$type<{ fieldKey: string; equals?: string; notEquals?: string } | null>(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("dynamic_form_fields_definition_key_idx").on(t.definitionId, t.fieldKey),
+    index("dynamic_form_fields_definition_idx").on(t.definitionId),
+  ],
+);
+
+/** A saved set of answers to a form definition version. Append-only, like every other version. */
+export const proposalVersions = pgTable(
+  "proposal_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => thesisCases.id, { onDelete: "cascade" }),
+    definitionId: integer("definition_id").references(() => dynamicFormDefinitions.id, { onDelete: "set null" }),
+    formCode: varchar("form_code", { length: 60 }).notNull(),
+    formVersion: integer("form_version").notNull(),
+    version: integer("version").notNull(),
+    /** Answers keyed by field key; validated against the definition before insert. */
+    answers: jsonb("answers").$type<Record<string, string | number | boolean | null>>().notNull(),
+    titleFa: text("title_fa"),
+    titleEn: text("title_en"),
+    keywords: text("keywords"),
+    /** draft | submitted | approved | revision_required | rejected */
+    status: varchar("status", { length: 24 }).notNull().default("draft"),
+    isActive: boolean("is_active").notNull().default(false),
+    attachmentFileId: uuid("attachment_file_id").references(() => files.id, { onDelete: "set null" }),
+    submittedBy: uuid("submitted_by").references(() => users.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionReason: text("decision_reason"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("proposal_versions_case_version_idx").on(t.caseId, t.version),
+    index("proposal_versions_case_idx").on(t.caseId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // M11: notifications (real in-app channel) + delivery log
 // ---------------------------------------------------------------------------
 
@@ -685,11 +919,22 @@ export const notifications = pgTable(
     caseId: uuid("case_id").references(() => thesisCases.id, { onDelete: "cascade" }),
     taskId: uuid("task_id").references(() => workflowTasks.id, { onDelete: "cascade" }),
     link: varchar("link", { length: 300 }),
+    /**
+     * Idempotency key of a generated notification (`task:{id}:day1`, `escalation:{id}`,
+     * `term:{caseId}:{termId}`, …). The unique index below guarantees one notification
+     * per (user, key), so a repeated scheduler tick can never duplicate a reminder.
+     * Null for notifications raised by direct user actions (they are never deduped).
+     */
+    dedupeKey: varchar("dedupe_key", { length: 160 }),
     isRead: boolean("is_read").notNull().default(false),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [index("notifications_user_idx").on(t.userId), index("notifications_unread_idx").on(t.userId, t.isRead)],
+  (t) => [
+    index("notifications_user_idx").on(t.userId),
+    index("notifications_unread_idx").on(t.userId, t.isRead),
+    uniqueIndex("notifications_user_dedupe_idx").on(t.userId, t.dedupeKey),
+  ],
 );
 
 /**
@@ -715,6 +960,8 @@ export const schedulerRuns = pgTable("scheduler_runs", {
   processed: integer("processed").notNull().default(0),
   created: integer("created").notNull().default(0),
   escalated: integer("escalated").notNull().default(0),
+  /** Explicit skip reason (e.g. "current term is not defined"); never silently dropped. */
+  note: text("note"),
   error: text("error"),
 });
 
@@ -730,3 +977,175 @@ export const userTwoFactors = pgTable("user_two_factors", {
   enrolledAt: timestamp("enrolled_at", { withTimezone: true }),
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
 });
+
+// ---------------------------------------------------------------------------
+// M7: term extension, committee meetings and finance records
+// All three are append-only histories: a correction creates a new row, and a
+// rejected row stays visible. Amounts are stored in the currency of the
+// installation (setting `finance.currency`) and are never recomputed on read.
+// ---------------------------------------------------------------------------
+
+/** A student's request to extend the allowed number of thesis terms. */
+export const thesisExtensions = pgTable(
+  "thesis_extensions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id").notNull().references(() => thesisCases.id, { onDelete: "cascade" }),
+    termId: integer("term_id").references(() => academicTerms.id, { onDelete: "set null" }),
+    requestedTerms: integer("requested_terms").notNull().default(1),
+    /** Mandatory on the server: an extension is never granted without a stated reason. */
+    reason: text("reason").notNull(),
+    /** pending | approved | rejected */
+    status: varchar("status", { length: 30 }).notNull().default("pending"),
+    fileId: uuid("file_id").references(() => files.id, { onDelete: "set null" }),
+    requestedBy: uuid("requested_by").references(() => users.id, { onDelete: "set null" }),
+    decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionReason: text("decision_reason"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("thesis_extensions_case_idx").on(t.caseId), index("thesis_extensions_status_idx").on(t.status)],
+);
+
+/** A defense/committee meeting with its members and minutes. */
+export const committeeMeetings = pgTable(
+  "committee_meetings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id").notNull().references(() => thesisCases.id, { onDelete: "cascade" }),
+    /** proposal_defense | pre_defense | final_defense */
+    meetingType: varchar("meeting_type", { length: 40 }).notNull().default("pre_defense"),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
+    location: varchar("location", { length: 200 }),
+    /** scheduled | held | cancelled */
+    status: varchar("status", { length: 30 }).notNull().default("scheduled"),
+    heldAt: timestamp("held_at", { withTimezone: true }),
+    /** passed | revision_required | rejected | null while only scheduled */
+    result: varchar("result", { length: 30 }),
+    minutesFa: text("minutes_fa"),
+    fileId: uuid("file_id").references(() => files.id, { onDelete: "set null" }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("committee_meetings_case_idx").on(t.caseId), index("committee_meetings_status_idx").on(t.status)],
+);
+
+/** Committee membership per meeting; the name is snapshotted for the minutes. */
+export const committeeMembers = pgTable(
+  "committee_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    meetingId: uuid("meeting_id").notNull().references(() => committeeMeetings.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    fullName: varchar("full_name", { length: 200 }).notNull(),
+    /** supervisor | advisor | internal | external | chair */
+    roleType: varchar("role_type", { length: 30 }).notNull().default("internal"),
+    isPresent: boolean("is_present").notNull().default(false),
+    note: text("note"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("committee_members_meeting_idx").on(t.meetingId)],
+);
+
+/** Financial records of a case (defense fee, extension fee, …). */
+export const financeRecords = pgTable(
+  "finance_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id").notNull().references(() => thesisCases.id, { onDelete: "cascade" }),
+    /** defense_fee | extension_fee | tuition | other */
+    kind: varchar("kind", { length: 40 }).notNull().default("defense_fee"),
+    amount: bigint("amount", { mode: "number" }).notNull().default(0),
+    currency: varchar("currency", { length: 10 }).notNull().default("IRR"),
+    /** pending | paid | waived */
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    receiptFileId: uuid("receipt_file_id").references(() => files.id, { onDelete: "set null" }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    note: text("note"),
+    settleReason: text("settle_reason"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    settledBy: uuid("settled_by").references(() => users.id, { onDelete: "set null" }),
+    settledAt: timestamp("settled_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("finance_records_case_idx").on(t.caseId), index("finance_records_status_idx").on(t.status)],
+);
+
+// ---------------------------------------------------------------------------
+// M8: versioned thesis file and similarity checks
+// A thesis version is append-only: a correction is a new version, never an edit.
+// Exactly one version may be active (partial unique index). The similarity result
+// is computed by comparing the reported percentage against the Setting
+// `similarity.maxPercent` — the threshold is never hard-coded.
+// ---------------------------------------------------------------------------
+
+export const thesisVersions = pgTable(
+  "thesis_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id").notNull().references(() => thesisCases.id, { onDelete: "cascade" }),
+    version: integer("version").notNull().default(1),
+    isActive: boolean("is_active").notNull().default(false),
+    titleFa: text("title_fa"),
+    /** The uploaded file; a version without a real file is meaningless. */
+    fileId: uuid("file_id").notNull().references(() => files.id, { onDelete: "restrict" }),
+    /** Why this version exists; mandatory from version 2 onwards. */
+    changeReason: text("change_reason"),
+    /** draft | submitted | approved | revision_required | rejected */
+    status: varchar("status", { length: 30 }).notNull().default("draft"),
+    submittedBy: uuid("submitted_by").references(() => users.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionReason: text("decision_reason"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("thesis_versions_case_version_idx").on(t.caseId, t.version),
+    index("thesis_versions_case_idx").on(t.caseId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// M10: graduation approval and case closure
+// A closure is a recorded decision with a reason, and it is only allowed when the
+// rule engine returns ALLOW (final thesis file, defense, IranDoc, finance).
+// ---------------------------------------------------------------------------
+
+export const graduationRecords = pgTable(
+  "graduation_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id").notNull().references(() => thesisCases.id, { onDelete: "cascade" }),
+    /** requested | approved | rejected */
+    status: varchar("status", { length: 30 }).notNull().default("requested"),
+    thesisVersionId: uuid("thesis_version_id").references(() => thesisVersions.id, { onDelete: "set null" }),
+    /** Extra documents (final PDF, forms) referenced by id — the file itself lives once. */
+    fileId: uuid("file_id").references(() => files.id, { onDelete: "set null" }),
+    note: text("note"),
+    requestedBy: uuid("requested_by").references(() => users.id, { onDelete: "set null" }),
+    decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionReason: text("decision_reason"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("graduation_records_case_idx").on(t.caseId), index("graduation_records_status_idx").on(t.status)],
+);
+
+/** Audit of a closure: who closed which case, when and with which reasoning. */
+export const caseClosures = pgTable(
+  "case_closures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: uuid("case_id").notNull().references(() => thesisCases.id, { onDelete: "cascade" }),
+    closedBy: uuid("closed_by").references(() => users.id, { onDelete: "set null" }),
+    closedAt: timestamp("closed_at", { withTimezone: true }).notNull().defaultNow(),
+    reason: text("reason"),
+    /** The ALLOW verdict of `canCloseCase` at the moment of closure (evidence). */
+    ruleSnapshot: jsonb("rule_snapshot"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("case_closures_case_idx").on(t.caseId)],
+);

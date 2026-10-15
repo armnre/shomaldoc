@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -43,6 +44,54 @@ describe("public asset contract", () => {
     for (const icon of ["icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"]) {
       const buf = readFileSync(publicPath(`/icons/${icon}`));
       expect(buf.subarray(0, 4)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    }
+  });
+});
+
+/**
+ * `docs/public-assets-manifest.json` is the verifiable inventory shipped with the
+ * release. These tests fail whenever a public file is added, removed or altered
+ * without regenerating it (`npm run assets:manifest`), and they reject placeholder
+ * content: an "empty" or signature-less binary can never travel with a release.
+ */
+function walkPublic(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...walkPublic(full));
+    else if (entry.isFile()) out.push(full);
+  }
+  return out;
+}
+
+describe("public asset manifest", () => {
+  const manifestPath = resolve("docs/public-assets-manifest.json");
+
+  it("exists and lists every file under public/ with size and SHA-256", () => {
+    expect(existsSync(manifestPath), "docs/public-assets-manifest.json is missing").toBe(true);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      count: number;
+      allSignaturesValid: boolean;
+      assets: Array<{ path: string; bytes: number; sha256: string; signatureOk: boolean; empty: boolean }>;
+    };
+    const files = walkPublic(resolve("public"))
+      .map((f) => `/public/${relative(resolve("public"), f).split(sep).join("/")}`)
+      .sort();
+    expect(manifest.assets.map((a) => a.path).sort()).toEqual(files);
+    expect(manifest.count).toBe(files.length);
+    expect(manifest.allSignaturesValid).toBe(true);
+    expect(manifest.assets.every((a) => a.signatureOk && !a.empty && a.bytes > 0)).toBe(true);
+  });
+
+  it("records hashes that match the bytes on disk (no drift)", () => {
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      assets: Array<{ path: string; bytes: number; sha256: string }>;
+    };
+    for (const asset of manifest.assets) {
+      const diskPath = join(resolve("public"), asset.path.replace("/public/", ""));
+      const buf = readFileSync(diskPath);
+      expect(buf.length, `${asset.path} size drifted`).toBe(asset.bytes);
+      expect(createHash("sha256").update(buf).digest("hex"), `${asset.path} hash drifted`).toBe(asset.sha256);
     }
   });
 });

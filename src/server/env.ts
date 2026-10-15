@@ -19,6 +19,16 @@ export const envSchema = z.object({
   PUBLIC_BASE_URL: z.url().optional(),
   /** Required for encrypting TOTP secrets at rest; generated locally when absent in dev. */
   APP_SECRET: z.string().min(16).optional(),
+  /**
+   * Preview only. The sandbox/CI live preview embeds the app inside an iframe, which
+   * needs `frame-ancestors` relaxed and partitioned third-party cookies. Production
+   * ignores the flag entirely (`allowsEmbedding` requires APP_ENV !== "production"),
+   * so the clickjacking defences can never be switched off on the real host.
+   */
+  ALLOW_EMBED: z
+    .enum(["true", "false", "1", "0"])
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -41,6 +51,37 @@ export function getEnv(): AppEnv {
     cached = parseEnv(process.env);
   }
   return cached;
+}
+
+/** True only for preview/CI environments that must be embeddable in an iframe. */
+export function isEmbedPreview(env: AppEnv = getEnv()): boolean {
+  return env.APP_ENV !== "production" && env.ALLOW_EMBED === true;
+}
+
+/**
+ * Cookie attributes for the embed preview. Inside a third-party iframe a
+ * `SameSite=Lax` cookie is never sent, which would make login appear to do
+ * nothing; a partitioned `SameSite=None` cookie is stored per top-level site and
+ * still works when third-party cookies are blocked.
+ */
+export function embedCookieAttributes(
+  env: AppEnv = getEnv(),
+  options: { secureRequest?: boolean } = {},
+): Pick<CookieOptions, "secure" | "sameSite" | "partitioned"> {
+  if (!isEmbedPreview(env)) return { secure: shouldUseSecureCookies(env), sameSite: "lax", partitioned: false };
+  // `SameSite=None` is only legal together with `Secure`: a browser rejects the
+  // pair otherwise and the session silently never persists. A preview reached
+  // over plain HTTP therefore falls back to `Lax`, which works when the address
+  // is opened as a top-level tab — the only context in which any browser accepts
+  // a cross-site session over http.
+  if (options.secureRequest === false) return { secure: false, sameSite: "lax", partitioned: false };
+  return { secure: true, sameSite: "none", partitioned: true };
+}
+
+interface CookieOptions {
+  secure?: boolean;
+  sameSite?: "lax" | "strict" | "none";
+  partitioned?: boolean;
 }
 
 /** Secure cookies are on by default in production; can be overridden via COOKIE_SECURE. */

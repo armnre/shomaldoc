@@ -1,7 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const ADMIN = { username: "dev.admin", password: "Preview-Shomal-2026" };
-const STUDENT = { username: "dev.student", password: "Preview-Shomal-2026" };
+// Demo passwords are supplied by the operator (E2E_PASSWORD) and never stored here.
+const E2E_PASSWORD = process.env.E2E_PASSWORD ?? "";
+const ADMIN = { username: process.env.E2E_ADMIN ?? "dev.admin", password: E2E_PASSWORD };
+const STUDENT = { username: process.env.E2E_STUDENT ?? "dev.student", password: E2E_PASSWORD };
+
+test.beforeAll(() => {
+  if (E2E_PASSWORD.length < 12) {
+    throw new Error("set E2E_PASSWORD (the preview demo password) before running the end-to-end suite");
+  }
+});
 
 async function login(page: Page, user: { username: string; password: string }) {
   await page.goto("/login");

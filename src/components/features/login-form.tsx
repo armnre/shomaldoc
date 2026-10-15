@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, LogIn } from "lucide-react";
 import { Alert, Button } from "@/components/ui";
 import { Input } from "@/components/ui/form";
 import { useI18n } from "@/i18n/provider";
@@ -10,7 +9,6 @@ import { apiRequest, errorText } from "./api-client";
 
 export function LoginForm() {
   const { dict } = useI18n();
-  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +16,15 @@ export function LoginForm() {
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
   const [errors, setErrors] = useState<{ identifier?: string; password?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [sessionBlocked, setSessionBlocked] = useState(false);
+  const [handoffUrl, setHandoffUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // The address offered when the browser refuses to keep the session inside an
+  // iframe. It is only ever rendered after a client-side event (the blocked flag
+  // can never be true during SSR), so reading window here cannot desynchronise
+  // hydration — and the notice offers a real address, not a dead control.
+  const previewUrl = sessionBlocked && typeof window !== "undefined" ? `${window.location.origin}/dashboard` : "/dashboard";
 
   const validate = () => {
     const next: typeof errors = {};
@@ -33,14 +39,28 @@ export function LoginForm() {
     setFormError(null);
     if (!validate()) return;
     setLoading(true);
-    const result = await apiRequest<{ redirectTo: string }>("/api/auth/login", "POST", {
+    const result = await apiRequest<{ redirectTo: string; handoffUrl: string | null }>("/api/auth/login", "POST", {
       identifier: identifier.trim(),
       password,
       twoFactorCode: twoFactorCode.trim() || undefined,
     });
     if (result.ok) {
-      router.replace(result.data.redirectTo);
-      router.refresh();
+      // A 200 only means the credentials were accepted. Verify that the session is
+      // actually usable before leaving the form: inside a third-party iframe the
+      // browser may refuse the session cookie, and navigating anyway would bounce
+      // straight back here with no explanation.
+      const session = await apiRequest<{ authenticated: boolean }>("/api/auth/session-state", "GET");
+      if (session.ok && session.data.authenticated) {
+        // Full page load (not a soft client navigation): the server renders the
+        // destination with the session cookie already in place.
+        window.location.assign(result.data.redirectTo);
+        return;
+      }
+      setLoading(false);
+      setSessionBlocked(true);
+      // The preview issues a single-use hand-off link: opening it in a real tab stores
+      // the session cookie first-party and lands on the dashboard.
+      setHandoffUrl(result.data.handoffUrl ?? null);
       return;
     }
     setLoading(false);
@@ -66,6 +86,24 @@ export function LoginForm() {
         <div id="login-error">
           <Alert tone="danger">{formError}</Alert>
         </div>
+      ) : null}
+      {sessionBlocked ? (
+        <Alert tone="warning">
+          <p className="font-semibold">{dict.auth.sessionNotStored}</p>
+          <p className="mt-2 text-sm">{dict.auth.copyAddress}</p>
+          <p className="mt-1 break-all text-sm" dir="ltr">
+            {previewUrl}
+          </p>
+          <a
+            href={handoffUrl ?? previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-medium hover:bg-surface-2"
+          >
+            <ExternalLink className="size-4" aria-hidden />
+            {dict.auth.openInNewTab}
+          </a>
+        </Alert>
       ) : null}
       <Input
         label={dict.auth.identifier}

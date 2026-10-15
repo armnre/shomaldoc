@@ -85,7 +85,7 @@ export function PageHeader({
   );
 }
 
-type Tone = "neutral" | "primary" | "success" | "warning" | "danger" | "info" | "accent";
+export type Tone = "neutral" | "primary" | "success" | "warning" | "danger" | "info" | "accent";
 
 const TONES: Record<Tone, string> = {
   neutral: "bg-surface-2 text-fg-muted",

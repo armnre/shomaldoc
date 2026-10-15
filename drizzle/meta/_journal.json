@@ -57,6 +57,55 @@
       "when": 1791872986119,
       "tag": "0007_smooth_red_shift",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791936471118,
+      "tag": "0008_light_frank_castle",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791936840087,
+      "tag": "0009_lively_victor_mancha",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791937444175,
+      "tag": "0010_far_serpent_society",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791970983896,
+      "tag": "0011_low_iron_monger",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791971292292,
+      "tag": "0012_steep_excalibur",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791971670265,
+      "tag": "0013_calm_jocasta",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791999362375,
+      "tag": "0014_login_handoffs",
+      "breakpoints": true
     }
   ]
 }

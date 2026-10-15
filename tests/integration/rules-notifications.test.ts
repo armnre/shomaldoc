@@ -138,7 +138,7 @@ describe("M11 notifications", () => {
   it("marks one and all as read for the owner only", async () => {
     const userId = await makeUser("student");
     const other = await makeUser("student");
-    const id = await notify({ userId, kind: "test", titleFa: "اعلان ۱" });
+    const id = (await notify({ userId, kind: "test", titleFa: "اعلان ۱" }))!;
     await notify({ userId, kind: "test", titleFa: "اعلان ۲" });
     // Another user cannot mark someone else's notification.
     expect(await markRead(other, id)).toBe(false);

@@ -6,6 +6,11 @@ import { getDashboardStats } from "@/server/services/dashboard";
 import { getCaseStats, getVisibleCaseIds } from "@/server/services/case";
 import { getServerI18n } from "@/i18n/server";
 import { formatDateTime, formatNumber } from "@/lib/format";
+import { SchedulerPanel } from "@/components/features/scheduler-panel";
+import { lastSchedulerRun, lastSuccessfulSchedulerRun } from "@/server/scheduler";
+import { getSettingValue } from "@/server/services/settings";
+import { pendingAdminCounts } from "@/server/services/thesis-admin";
+import { pendingGraduationCount } from "@/server/services/graduation";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +18,12 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const { dict, locale } = await getServerI18n();
   const canSeeAdmin = can(user, "users.view") && can(user, "audit.view");
+  const canSeeSettings = can(user, "settings.view");
   const stats = canSeeAdmin ? await getDashboardStats() : null;
+  // Scheduler health belongs to operators: last run, last success, live settings.
+  const [latestRun, latestSuccess, schedulerEnabled] = canSeeSettings
+    ? await Promise.all([lastSchedulerRun(), lastSuccessfulSchedulerRun(), getSettingValue("scheduler.enabled")])
+    : [null, null, false];
 
   // Case stats use exactly the same visibility rules as the case list.
   const visibleCaseIds = await getVisibleCaseIds(user);
@@ -21,12 +31,27 @@ export default async function DashboardPage() {
     ? { total: 0, pending: 0, needsRevision: 0 }
     : await getCaseStats(visibleCaseIds);
 
+  // Role dashboard: the queues the current user is actually responsible for.
+  const isReviewer = can(user, "cases.review_topic");
+  const [adminPending, graduationPending] = isReviewer
+    ? await Promise.all([pendingAdminCounts(), pendingGraduationCount()])
+    : [{ extensions: 0, meetings: 0, finances: 0 }, { pending: 0, hasPending: false }];
+
   return (
     <>
       <PageHeader
         title={canSeeAdmin ? dict.dashboard.title : `${dict.dashboard.welcome}، ${user.fullName}`}
         subtitle={canSeeAdmin ? dict.dashboard.subtitle : dict.dashboard.welcomeText}
       />
+
+      {isReviewer ? (
+        <section aria-label={dict.dashboardExtra.myQueues} className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label={dict.dashboardExtra.queueExtensions} value={formatNumber(adminPending.extensions, locale)} hint={dict.dashboardExtra.queueHint} icon={<FileText className="size-5" aria-hidden />} tone="accent" />
+          <StatCard label={dict.dashboardExtra.queueMeetings} value={formatNumber(adminPending.meetings, locale)} hint={dict.dashboardExtra.queueHint} icon={<FileText className="size-5" aria-hidden />} tone="teal" />
+          <StatCard label={dict.dashboardExtra.queueFinances} value={formatNumber(adminPending.finances, locale)} hint={dict.dashboardExtra.queueHint} icon={<FileText className="size-5" aria-hidden />} tone="info" />
+          <StatCard label={dict.dashboardExtra.queueGraduation} value={formatNumber(graduationPending.pending, locale)} hint={dict.dashboardExtra.queueHint} icon={<FileText className="size-5" aria-hidden />} tone="primary" />
+        </section>
+      ) : null}
 
       {caseStats.total > 0 || canSeeAdmin ? (
         <section aria-label={dict.dashboardExtra.statCases} className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -76,6 +101,19 @@ export default async function DashboardPage() {
               <Users2 className="mt-2 size-10 self-center text-primary/30" aria-hidden />
             </Card>
           </div>
+
+          {canSeeSettings ? (
+            <SchedulerPanel
+              lastRun={latestRun ? { ...latestRun, startedAt: latestRun.startedAt.toISOString(), finishedAt: latestRun.finishedAt ? latestRun.finishedAt.toISOString() : null } : null}
+              lastSuccess={
+                latestSuccess ? { ...latestSuccess, startedAt: latestSuccess.startedAt.toISOString(), finishedAt: latestSuccess.finishedAt ? latestSuccess.finishedAt.toISOString() : null } : null
+              }
+              enabled={schedulerEnabled}
+              canRun={can(user, "settings.manage")}
+              locale={locale}
+              labels={dict.scheduler}
+            />
+          ) : null}
         </>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">

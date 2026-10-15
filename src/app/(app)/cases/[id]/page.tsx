@@ -7,9 +7,17 @@ import { getCaseById, getCaseEvents, getCaseFiles, getCaseSupervisors, getVisibl
 import { STATUS_MAP, getAvailableTransitions } from "@/server/workflows";
 import { getServerI18n } from "@/i18n/server";
 import { formatDateTime, formatNumber } from "@/lib/format";
+import { maskStudentNumber, maySeePersonalData } from "@/lib/personal-data";
 import { CaseTransitionForm, TopicForm, AddSupervisorForm, CaseEditForm, CaseFileUpload } from "@/components/features/case-forms";
 import { CaseRulesPanel } from "@/components/features/case-rules";
 import { listDepartmentOptions } from "@/server/services/organization";
+import { listTopicVersions } from "@/server/services/topic";
+import { LiteraturePanel, TopicVersionsPanel } from "@/components/features/case-m4";
+import { ProposalPanel } from "@/components/features/proposal-form";
+import { IrandocPanel } from "@/components/features/irandoc-panel";
+import { CommitteePanel, ExtensionPanel, FinancePanel } from "@/components/features/thesis-admin-panel";
+import { SimilarityPanel, ThesisVersionPanel } from "@/components/features/thesis-panel";
+import { GraduationPanel } from "@/components/features/graduation-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +28,15 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const tc = await getCaseById(id, user).catch(() => null);
   if (!tc) notFound();
 
-  const [events, supervisors, caseFiles, departments] = await Promise.all([
+  const [events, supervisors, caseFiles, departments, topicVersionRows] = await Promise.all([
     getCaseEvents(id),
     getCaseSupervisors(id),
     getCaseFiles(id),
     listDepartmentOptions(),
+    // Version history is only read when the viewer may see this case at all.
+    user.permissions.includes("cases.submit_topic") || user.permissions.includes("cases.review_topic") || user.permissions.includes("cases.view_all") || tc.studentUserId === user.id
+      ? listTopicVersions(id)
+      : Promise.resolve([]),
   ]);
 
   const statusInfo = STATUS_MAP[tc.currentStatus as keyof typeof STATUS_MAP];
@@ -39,6 +51,10 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const canTransition = available.length > 0;
   const canEdit = tc.currentStatus === "draft" || tc.currentStatus === "revision_required";
   const isOwner = tc.studentUserId === user.id;
+  // Identifiers stay masked unless the viewer owns the case or holds an operator grant.
+  const maskedStudentNumber = maySeePersonalData({ isOwner, permissions: user.permissions })
+    ? tc.studentNumber
+    : maskStudentNumber(tc.studentNumber);
   const canShowEditForm =
     user.permissions.includes("cases.edit_metadata") ||
     user.permissions.includes("cases.update_assigned") ||
@@ -55,9 +71,18 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         title={tc.caseNumber}
         subtitle={tc.titleFa ?? dict.cases.noTitle}
         actions={
-          <Badge tone={toneMap[tc.currentStatus] ?? "neutral"}>
-            {statusInfo?.fa ?? tc.currentStatus}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={toneMap[tc.currentStatus] ?? "neutral"}>
+              {statusInfo?.fa ?? tc.currentStatus}
+            </Badge>
+            <a
+              className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-surface-2"
+              href={`/api/cases/${tc.id}/pdf`}
+            >
+              <FileText className="size-4" aria-hidden />
+              {dict.cases.downloadPdf}
+            </a>
+          </div>
         }
       />
 
@@ -69,7 +94,11 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             <h2 className="flex items-center gap-2 text-lg font-semibold"><User className="size-5 text-primary" aria-hidden />{dict.cases.studentInfo}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div><p className="text-xs text-fg-muted">{dict.cases.form.studentFullName}</p><p className="font-medium">{tc.studentFullName}</p></div>
-              <div><p className="text-xs text-fg-muted">{dict.cases.form.studentNumber}</p><p className="font-mono text-sm" dir="ltr">{tc.studentNumber ?? "—"}</p></div>
+              <div>
+                <p className="text-xs text-fg-muted">{dict.cases.form.studentNumber}</p>
+                {/* Personal identifiers are masked for everyone except the owner and operators. */}
+                <p className="font-mono text-sm" dir="ltr">{maskedStudentNumber ?? "—"}</p>
+              </div>
             </div>
             <h2 className="flex items-center gap-2 text-lg font-semibold"><FileText className="size-5 text-teal-600" aria-hidden />{dict.cases.academicInfo}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -93,6 +122,43 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
               <TopicForm caseId={tc.id} dict={dict} existing={{ titleFa: tc.titleFa ?? undefined, titleEn: tc.titleEn ?? undefined, keywords: tc.keywords ?? undefined }} />
             ) : null}
           </Card>
+
+          {/* M4: versioned topic history with the reviewer panel */}
+          <TopicVersionsPanel
+            caseId={tc.id}
+            dict={dict}
+            permissions={user.permissions}
+            canSubmit={
+              (user.permissions.includes("cases.submit_topic") &&
+                (isOwner || user.permissions.includes("cases.edit_metadata") || user.permissions.includes("cases.view_all"))) ||
+              false
+            }
+          />
+
+          {/* M4: literature review rounds and versions */}
+          <LiteraturePanel caseId={tc.id} dict={dict} permissions={user.permissions} />
+
+          {/* M5: proposal rendered from the published dynamic form definition */}
+          <ProposalPanel
+            caseId={tc.id}
+            dict={dict}
+            canSubmit={isOwner || user.permissions.includes("cases.submit_topic")}
+            canReview={user.permissions.includes("cases.review_topic")}
+          />
+
+          <IrandocPanel caseId={tc.id} dict={dict} permissions={user.permissions} />
+
+          <ExtensionPanel caseId={tc.id} dict={dict} permissions={user.permissions} />
+
+          <CommitteePanel caseId={tc.id} dict={dict} permissions={user.permissions} />
+
+          <FinancePanel caseId={tc.id} dict={dict} permissions={user.permissions} />
+
+          <ThesisVersionPanel caseId={tc.id} dict={dict} permissions={user.permissions} />
+
+          <SimilarityPanel caseId={tc.id} dict={dict} permissions={user.permissions} />
+
+          <GraduationPanel caseId={tc.id} dict={dict} permissions={user.permissions} />
 
           {/* Timeline */}
           <Card className="p-6">
