@@ -121,6 +121,34 @@ node scripts/acceptance.mjs                                                   # 
 > `tools/sandbox-postgres.mjs` فقط ابزار سندباکس/CI است (وابستگی `embedded-postgres` عمداً در
 > `package.json` برنامه نیست) و در بستهٔ آفلاین هم بسته‌بندی نمی‌شود.
 
+## UX overhaul — شاخه `feature/ux-overhaul`
+
+### انجام‌شده
+- ممیزی UX در `docs/ux-audit-fa.md` با فهرست ۱۸ صفحه و شمار کلیک مسیرهای اصلی.
+- رفع ریشه‌ای ذخیره گردش‌کار: draft درجا ویرایش می‌شود؛ ذخیره از published یک draft موجود را بازاستفاده یا فقط یک نسخه بعدی می‌سازد؛ redirect به ID draft، reset با key، toast، dialog دلیل، هشدار خروج، diff، اعتبارسنجی و انتشار شفاف.
+- invariant انتشار: برای هر `workflow_definitions.code` فقط یک ردیف active باقی می‌ماند؛ instanceهای باز همچنان به definition قدیمی خود اشاره می‌کنند.
+- مرکز مدیریت، command palette و کاهش آیتم‌های sidebar؛ `/design` از ناوبری production خارج شد.
+- تایم‌لاین پرونده و feed رویدادها با فیلتر/گروه‌بندی، مسئول و مهلت؛ گراف SVG و timeline نسخه‌های گردش‌کار.
+- تست integration چرخه کامل draft و تست Playwright ماندگاری پس از refresh اضافه شد.
+
+### بررسی ادیتورهای مشابه
+- فرم‌ساز از قبل `PUT` روی draft انجام می‌دهد و published را در سرور immutable نگه می‌دارد؛ پس از انتشار فهرست API را reload می‌کند.
+- سازمان، تنظیمات و نقش‌ها update درجا و audit دارند؛ الگوی معیوب «ساخت نسخه جدید و ماندن روی ID قبلی» در آن‌ها دیده نشد.
+- بهبود یکپارچه toast/هشدار خروج برای تمام ادیتورهای قدیمی هنوز کامل نشده و نباید تمام‌شده تلقی شود.
+
+### دیتابیس
+- migration جدید: **ندارد**. داده تایم‌لاین از `workflow_steps`، `workflow_instances`، `workflow_tasks` و `thesis_case_events` موجود بازسازی می‌شود.
+
+### خط پایه و QA
+- baseline پیش از تغییر: `npm ci` ✅؛ `typecheck` ✅؛ `lint` ✅؛ `test` ❌ به‌علت نبود `DATABASE_URL` در کلون تازه (۲۱ فایل fail، ۸ فایل/۶۷ تست pass). npm نیز ۱۷ vulnerability dependency گزارش کرد.
+- گیت میانی پس از تغییر: `npm run typecheck` ✅ و `npm run lint` ✅.
+- نتیجه نهایی build/test و محدودیت Playwright در گزارش نهایی همین تحویل ثبت می‌شود.
+
+### انجام‌نشده/محدود
+- بازطراحی صفحه‌به‌صفحه تمام فرم‌های بلند و جدول‌های موبایل در این دامنه کامل نشده است.
+- نام فاعل/دلیل انتشار در timeline نسخه ادمین فقط تا حد داده definition نمایش داده می‌شود؛ audit کامل در صفحه ممیزی موجود است اما join اختصاصی timeline هنوز اضافه نشده است.
+- اجرای مرورگری Playwright وابسته به وجود Chromium و `E2E_PASSWORD` محیط است.
+
 ### وضعیت پس از بازیابی (۱۴۰۵/۰۷/۲۲ — 2026-10-14 17:13Z)
 | مورد | نتیجه |
 | --- | --- |

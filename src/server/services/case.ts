@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, or, ilike, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, or, ilike, sql } from "drizzle-orm";
 import { db, type DbLike, type DbTx } from "@/db";
 import {
   academicTerms,
@@ -15,7 +15,7 @@ import {
   users,
 } from "@/db/schema";
 import { CORE_DEFINITION_CODE, applyTransition, findTransition, getActiveDefinition, getAvailableTransitions, getAvailableTransitionsFrom as getAvailableTransitionsFromDb, isCaseStatus, startInstance, statusLabelFa } from "@/server/workflows";
-import { thesisCases as thesisCasesAlias, workflowInstances, workflowTasks } from "@/db/schema";
+import { thesisCases as thesisCasesAlias, workflowInstances, workflowSteps, workflowTasks } from "@/db/schema";
 void thesisCasesAlias;
 import { AppError } from "@/server/http";
 import { loadUserAccess } from "@/server/rbac/service";
@@ -757,6 +757,42 @@ export async function getCaseTasks(caseId: string) {
     .leftJoin(users, eq(users.id, workflowTasks.assigneeUserId))
     .where(eq(workflowTasks.caseId, caseId))
     .orderBy(desc(workflowTasks.createdAt));
+}
+
+/** Reconstructs the case stepper from the immutable definition, tasks and events. */
+export async function getCaseWorkflowProgress(caseId: string) {
+  const [instance] = await db.select().from(workflowInstances).where(eq(workflowInstances.caseId, caseId)).orderBy(desc(workflowInstances.startedAt)).limit(1);
+  if (!instance) return null;
+  const [steps, tasks, events] = await Promise.all([
+    db.select().from(workflowSteps).where(eq(workflowSteps.definitionId, instance.definitionId)).orderBy(asc(workflowSteps.orderIndex)),
+    getCaseTasks(caseId),
+    getCaseEvents(caseId),
+  ]);
+  const currentIndex = Math.max(0, steps.findIndex((step) => step.stepKey === instance.currentStep));
+  const chronologicalEvents = [...events].reverse();
+  const pendingTask = tasks.find((task) => task.status === "pending") ?? null;
+  return {
+    currentStep: instance.currentStep,
+    startedAt: instance.startedAt,
+    endedAt: instance.endedAt,
+    steps: steps.map((step, index) => {
+      const entry = chronologicalEvents.find((event) => event.newStatus === step.stepKey);
+      const nextStep = steps[index + 1];
+      const exit = nextStep ? chronologicalEvents.find((event) => event.newStatus === nextStep.stepKey) : instance.endedAt ? { createdAt: instance.endedAt } : null;
+      const state: "done" | "current" | "upcoming" = index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming";
+      return {
+        key: step.stepKey,
+        titleFa: step.titleFa,
+        state,
+        startedAt: entry?.createdAt ?? (index === 0 ? instance.startedAt : null),
+        endedAt: state === "done" ? exit?.createdAt ?? null : null,
+        responsibleName: state === "current" ? pendingTask?.assigneeName ?? null : null,
+        responsibleRole: state === "current" ? pendingTask?.roleKey ?? null : null,
+        dueDate: state === "current" ? pendingTask?.dueDate ?? null : null,
+        actionTitle: state === "current" ? pendingTask?.titleFa ?? null : null,
+      };
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------

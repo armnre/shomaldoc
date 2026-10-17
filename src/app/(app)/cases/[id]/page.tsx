@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FileText, User, Users, Clock, Upload, ArrowRight } from "lucide-react";
-import { Badge, Breadcrumb, Card, EmptyState, PageHeader, Timeline } from "@/components/ui";
+import { FileText, User, Users, Upload, ArrowRight } from "lucide-react";
+import { Badge, Breadcrumb, Card, EmptyState, PageHeader } from "@/components/ui";
 import { requireUser } from "@/server/auth/current-user";
-import { getCaseById, getCaseEvents, getCaseFiles, getCaseSupervisors, getVisibleCaseIds } from "@/server/services/case";
+import { getCaseById, getCaseEvents, getCaseFiles, getCaseSupervisors, getCaseWorkflowProgress } from "@/server/services/case";
 import { STATUS_MAP, getAvailableTransitions } from "@/server/workflows";
 import { getServerI18n } from "@/i18n/server";
 import { formatDateTime, formatNumber } from "@/lib/format";
@@ -18,6 +18,7 @@ import { IrandocPanel } from "@/components/features/irandoc-panel";
 import { CommitteePanel, ExtensionPanel, FinancePanel } from "@/components/features/thesis-admin-panel";
 import { SimilarityPanel, ThesisVersionPanel } from "@/components/features/thesis-panel";
 import { GraduationPanel } from "@/components/features/graduation-panel";
+import { CaseTimeline } from "@/components/features/case-timeline";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const tc = await getCaseById(id, user).catch(() => null);
   if (!tc) notFound();
 
-  const [events, supervisors, caseFiles, departments, topicVersionRows] = await Promise.all([
+  const [events, supervisors, caseFiles, departments, topicVersionRows, workflowProgress] = await Promise.all([
     getCaseEvents(id),
     getCaseSupervisors(id),
     getCaseFiles(id),
@@ -37,6 +38,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
     user.permissions.includes("cases.submit_topic") || user.permissions.includes("cases.review_topic") || user.permissions.includes("cases.view_all") || tc.studentUserId === user.id
       ? listTopicVersions(id)
       : Promise.resolve([]),
+    getCaseWorkflowProgress(id),
   ]);
 
   const statusInfo = STATUS_MAP[tc.currentStatus as keyof typeof STATUS_MAP];
@@ -160,21 +162,29 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
           <GraduationPanel caseId={tc.id} dict={dict} permissions={user.permissions} />
 
-          {/* Timeline */}
-          <Card className="p-6">
-            <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold"><Clock className="size-5 text-primary" aria-hidden />{dict.cases.caseHistory}</h2>
-            <Timeline
-              emptyText={dict.cases.noEvents}
-              items={events.map((ev) => ({
-                id: ev.id,
-                title: ev.description ?? ev.eventType,
-                description: ev.actorFullName ?? dict.common.system,
-                time: formatDateTime(ev.createdAt, locale),
-                meta: ev.reason ? `${dict.common.reason}: ${ev.reason}` : undefined,
-                tone: ev.eventType === "supervisor_added" || ev.eventType === "topic_saved_draft" ? "success" : ev.eventType === "status_transition" ? "primary" : undefined,
-              }))}
-            />
-          </Card>
+          {/* Workflow stepper and filterable activity feed */}
+          <CaseTimeline
+            dict={dict}
+            locale={locale}
+            progress={workflowProgress ? {
+              currentStep: workflowProgress.currentStep,
+              steps: workflowProgress.steps.map((step) => ({
+                ...step,
+                startedAt: step.startedAt?.toISOString() ?? null,
+                endedAt: step.endedAt?.toISOString() ?? null,
+                dueDate: step.dueDate?.toISOString() ?? null,
+              })),
+            } : null}
+            events={events.map((event) => ({
+              id: event.id,
+              eventType: event.eventType,
+              description: event.description,
+              actorFullName: event.actorFullName,
+              actorRole: event.actorRole,
+              reason: event.reason,
+              createdAt: event.createdAt.toISOString(),
+            }))}
+          />
 
           {/* Rule engine verdicts with precise Persian denial reasons */}
           <Card className="p-6">

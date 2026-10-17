@@ -13,6 +13,7 @@ import {
   getDefinitionDetail,
   listDefinitions,
   publishNewVersion,
+  saveWorkflowDraft,
   setPublished,
   validateDraft,
 } from "@/server/services/workflow-admin";
@@ -315,6 +316,42 @@ describe("definition versioning", () => {
     await setPublished(admin, def!.id, true, "بازگردانی نسخهٔ اصلی پس از آزمون", ctx);
     const restored = await getActiveDefinition(CORE_DEFINITION_CODE);
     expect(restored!.id).toBe(def!.id);
+  });
+
+  it("creates one draft, updates it in place, then publishes exactly one active version", async () => {
+    const original = await getActiveDefinition(CORE_DEFINITION_CODE);
+    expect(original).not.toBeNull();
+    const input = {
+      steps: [
+        { stepKey: "START", titleFa: "شروع آزمون", orderIndex: 0, isInitial: true, isTerminal: false },
+        { stepKey: "DONE", titleFa: "پایان آزمون", orderIndex: 1, isInitial: false, isTerminal: true },
+      ],
+      transitions: [
+        { fromStep: "START", action: "finish", actionLabelFa: "پایان", toStep: "DONE", requiredPermission: "cases.archive", reasonRequired: false },
+      ],
+      reason: "ساخت پیش‌نویس چرخه آزمون",
+    };
+
+    const firstDraft = await saveWorkflowDraft(admin, original!.id, input, ctx);
+    createdDefinitionIds.push(firstDraft.id);
+    expect(firstDraft.isPublished).toBe(false);
+
+    const secondDraft = await saveWorkflowDraft(
+      admin,
+      firstDraft.id,
+      { ...input, steps: [{ ...input.steps[0], titleFa: "شروع ویرایش‌شده" }, input.steps[1]], reason: "ویرایش دوباره همان پیش‌نویس" },
+      ctx,
+    );
+    expect(secondDraft.id).toBe(firstDraft.id);
+    const persisted = await getDefinitionDetail(firstDraft.id);
+    expect(persisted.steps.find((step) => step.stepKey === "START")?.titleFa).toBe("شروع ویرایش‌شده");
+
+    await setPublished(admin, firstDraft.id, true, "انتشار چرخه آزمون", ctx);
+    const versions = await db.select().from(workflowDefinitions).where(eq(workflowDefinitions.code, CORE_DEFINITION_CODE));
+    expect(versions.filter((definition) => definition.isActive)).toHaveLength(1);
+    expect(versions.find((definition) => definition.isActive)?.id).toBe(firstDraft.id);
+
+    await setPublished(admin, original!.id, true, "بازگردانی نسخه اصلی پس از آزمون چرخه", ctx);
   });
 
   it("a user without workflow.manage cannot publish or unpublish", async () => {

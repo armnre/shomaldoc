@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Building2,
   FileText,
@@ -75,8 +75,24 @@ export function AppShell({
   footer: ReactNode;
 }) {
   const { dict } = useI18n();
+  const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
   const pathname = usePathname();
+  const commandItems = useMemo(() => nav.filter((item) => item.label.toLocaleLowerCase().includes(commandQuery.trim().toLocaleLowerCase())), [commandQuery, nav]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandOpen((open) => !open);
+      }
+      if (event.key === "Escape") setCommandOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const groupLabels: Record<NavGroup, string> = {
     main: dict.nav.groupMain,
@@ -155,6 +171,25 @@ export function AppShell({
         </div>
       ) : null}
 
+      {commandOpen ? <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center bg-navy-900/60 p-4 pt-[12vh]" role="dialog" aria-modal="true" aria-label={dict.nav.commandPalette} onMouseDown={(event) => { if (event.target === event.currentTarget) setCommandOpen(false); }}>
+        <div className="w-full max-w-xl overflow-hidden rounded-xl border border-border bg-surface shadow-lift">
+          <form onSubmit={(event) => { event.preventDefault(); const query = commandQuery.trim(); if (!query) return; setCommandOpen(false); router.push(`/search?q=${encodeURIComponent(query)}`); }}>
+            <div className="flex items-center gap-3 border-b border-border p-4">
+              <Search className="size-5 text-fg-muted" aria-hidden />
+              <input autoFocus value={commandQuery} onChange={(event) => setCommandQuery(event.target.value)} placeholder={dict.nav.commandHint} aria-label={dict.nav.commandPalette} className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-fg-muted" />
+              <kbd className="rounded border border-border bg-surface-2 px-2 py-1 text-xs">Esc</kbd>
+            </div>
+          </form>
+          <div className="max-h-80 overflow-y-auto p-2">
+            {commandItems.length === 0 ? <p className="p-5 text-center text-sm text-fg-muted">{dict.nav.noCommandResult}</p> : commandItems.map((item) => {
+              const Icon = ICONS[item.icon];
+              return <Link key={item.href} href={item.href} onClick={() => { setCommandOpen(false); setCommandQuery(""); }} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-surface-2"><Icon className="size-5 text-primary" aria-hidden />{item.label}</Link>;
+            })}
+          </div>
+          <p className="border-t border-border px-4 py-2 text-xs text-fg-muted">{dict.nav.commandShortcut}</p>
+        </div>
+      </div> : null}
+
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-[var(--z-sticky)] border-b border-border bg-bg/85 backdrop-blur">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
@@ -167,16 +202,11 @@ export function AppShell({
               <Menu className="size-5" aria-hidden />
             </button>
 
-            <form action="/cases" method="get" role="search" className="relative hidden flex-1 max-w-md md:block">
-              <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-fg-muted" aria-hidden />
-              <input
-                type="search"
-                name="q"
-                aria-label={dict.common.search}
-                placeholder={dict.common.searchPlaceholder}
-                className="h-10 w-full rounded-md border border-border bg-surface ps-9 pe-3 text-sm placeholder:text-fg-muted/70"
-              />
-            </form>
+            <button type="button" onClick={() => setCommandOpen(true)} className="hidden h-10 max-w-md flex-1 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-fg-muted transition hover:border-primary/40 hover:shadow-soft md:flex">
+              <Search className="size-4" aria-hidden />
+              <span>{dict.nav.commandHint}</span>
+              <kbd className="ms-auto rounded border border-border bg-surface-2 px-2 py-0.5 text-xs" dir="ltr">⌘ K</kbd>
+            </button>
 
             <div className="ms-auto flex items-center gap-1">
               <NotificationCenter />

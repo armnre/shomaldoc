@@ -89,6 +89,21 @@ test.describe("critical flows", () => {
     await expect(page.getByRole("heading", { name: "گروه‌های آموزشی" })).toBeVisible();
   });
 
+  test("workflow draft survives save and page refresh", async ({ page }) => {
+    await login(page, ADMIN);
+    await page.goto("/admin/workflows");
+    const titleInput = page.getByLabel("عنوان مرحله").first();
+    await expect(titleInput).toBeVisible();
+    const changedTitle = `مرحله آزمون ${Date.now()}`;
+    await titleInput.fill(changedTitle);
+    await page.getByRole("button", { name: "ذخیرهٔ پیش‌نویس" }).click();
+    await page.getByLabel("دلیل تغییر (الزامی)").fill("آزمون ماندگاری پیش‌نویس در مرورگر");
+    await page.getByRole("button", { name: "ادامه" }).click();
+    await expect(page).toHaveURL(/\/admin\/workflows\?id=\d+/, { timeout: 30_000 });
+    await page.reload();
+    await expect(page.getByLabel("عنوان مرحله").first()).toHaveValue(changedTitle);
+  });
+
   test("design system page renders the component library", async ({ page }) => {
     await login(page, ADMIN);
     await page.goto("/design");

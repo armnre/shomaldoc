@@ -120,9 +120,92 @@ export interface PublishVersionInput {
   reason: string;
 }
 
+async function replaceDraftGraph(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  definitionId: number,
+  input: PublishVersionInput,
+) {
+  await tx.delete(workflowTransitions).where(eq(workflowTransitions.definitionId, definitionId));
+  await tx.delete(workflowSteps).where(eq(workflowSteps.definitionId, definitionId));
+  await tx.insert(workflowSteps).values(input.steps.map((step) => ({ ...step, definitionId })));
+  if (input.transitions.length > 0) {
+    await tx.insert(workflowTransitions).values(
+      input.transitions.map((transition) => ({
+        definitionId,
+        fromStep: transition.fromStep,
+        action: transition.action,
+        actionLabelFa: transition.actionLabelFa,
+        toStep: transition.toStep,
+        requiredPermission: transition.requiredPermission,
+        reasonRequired: transition.reasonRequired,
+        assignRole: transition.assignRole ?? null,
+        dueDays: transition.dueDays ?? null,
+        escalationRole: transition.escalationRole ?? null,
+      })),
+    );
+  }
+}
+
 /**
- * Publishes a NEW version of an existing definition. Validation runs before any
- * write; an invalid graph is rejected with the exact Persian reasons.
+ * Saves an editable draft. Published definitions are immutable: saving from one
+ * reuses the code's existing draft, or creates exactly one next draft version.
+ */
+export async function saveWorkflowDraft(actor: WorkflowActor, definitionId: number, input: PublishVersionInput, ctx: RequestContext) {
+  await assertCanFromDb(actor, "workflow.manage");
+  return db.transaction(async (tx) => {
+    const [source] = await tx.select().from(workflowDefinitions).where(eq(workflowDefinitions.id, definitionId)).for("update").limit(1);
+    if (!source) throw new AppError(404, "DEFINITION_NOT_FOUND", "تعریف گردش‌کار یافت نشد.");
+
+    const versions = await tx
+      .select()
+      .from(workflowDefinitions)
+      .where(eq(workflowDefinitions.code, source.code))
+      .orderBy(desc(workflowDefinitions.version))
+      .for("update");
+    const existingDraft = versions.find((definition) => !definition.isPublished);
+    const draft = !source.isPublished
+      ? source
+      : existingDraft ?? (await tx
+          .insert(workflowDefinitions)
+          .values({
+            code: source.code,
+            titleFa: input.titleFa?.trim() || source.titleFa,
+            version: (versions[0]?.version ?? source.version) + 1,
+            isPublished: false,
+            isActive: false,
+            pendingUniversityApproval: source.pendingUniversityApproval,
+            createdBy: actor.id,
+          })
+          .returning())[0];
+
+    const before = await getDefinitionGraphForTx(tx, draft.id);
+    await replaceDraftGraph(tx, draft.id, input);
+    const [updated] = await tx
+      .update(workflowDefinitions)
+      .set({ titleFa: input.titleFa?.trim() || draft.titleFa, isActive: false, updatedAt: new Date() })
+      .where(eq(workflowDefinitions.id, draft.id))
+      .returning();
+
+    await recordAudit(
+      {
+        actorUserId: actor.id,
+        action: draft.id === source.id || existingDraft ? "workflow.draft_updated" : "workflow.draft_created",
+        entityType: "workflow_definition",
+        entityId: String(draft.id),
+        before: { definitionId: draft.id, steps: before.steps.length, transitions: before.transitions.length },
+        after: { definitionId: draft.id, version: draft.version, steps: input.steps.length, transitions: input.transitions.length },
+        reason: input.reason,
+      },
+      ctx,
+      tx,
+    );
+    return updated;
+  });
+}
+
+/**
+ * Creates a NEW validated draft version. Kept as the explicit additive API used
+ * by existing integrations; the editor uses saveWorkflowDraft instead.
  */
 export async function publishNewVersion(actor: WorkflowActor, definitionId: number, input: PublishVersionInput, ctx: RequestContext) {
   await assertCanFromDb(actor, "workflow.manage");
@@ -205,7 +288,7 @@ export async function setPublished(actor: WorkflowActor, definitionId: number, p
       await tx
         .update(workflowDefinitions)
         .set({ isActive: false, updatedAt: new Date() })
-        .where(and(eq(workflowDefinitions.code, def.code), eq(workflowDefinitions.isPublished, true)));
+        .where(eq(workflowDefinitions.code, def.code));
     }
 
     await tx

@@ -19,15 +19,15 @@ export const GET = apiRoute<Ctx>(async (_request, ctx) => {
   return jsonOk(await getDefinitionDetail(await readId(ctx)));
 });
 
-/** Publishes a NEW version; the running one is never edited in place. */
+/** Saves a draft in place, or creates/reuses the next draft from a published version. */
 export const POST = apiRoute<Ctx>(async (request, ctx) => {
   assertSameOrigin(request);
   const actor = await requireApiUser("workflow.manage");
   const id = await readId(ctx);
   const input = await parseJson(request, workflowDetailQuerySchema.publishVersion);
-  const { publishNewVersion } = await import("@/server/services/workflow-admin");
-  const created = await publishNewVersion(actor, id, input, { ip: getClientIp(request), userAgent: getUserAgent(request) });
-  return jsonOk(created, { status: 201 });
+  const { saveWorkflowDraft } = await import("@/server/services/workflow-admin");
+  const draft = await saveWorkflowDraft(actor, id, input, { ip: getClientIp(request), userAgent: getUserAgent(request) });
+  return jsonOk(draft, { status: draft.id === id ? 200 : 201 });
 });
 
 export const PATCH = apiRoute<Ctx>(async (request, ctx) => {

@@ -1,0 +1,1013 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: critical-flows.spec.ts >> critical flows >> workflow draft survives save and page refresh
+- Location: tests/e2e/critical-flows.spec.ts:92:7
+
+# Error details
+
+```
+Test timeout of 60000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - link "پرش به محتوای اصلی" [ref=f2e3] [cursor=pointer]:
+      - /url: "#main"
+    - generic [ref=f2e4]:
+      - banner [ref=f2e5]:
+        - generic [ref=f2e6]:
+          - button "باز کردن منوی کناری" [ref=f2e7]
+          - generic [ref=f2e9]:
+            - button "اعلان‌ها" [ref=f2e11]
+            - button "زبان" [ref=f2e15]: EN
+            - button "تم" [ref=f2e20]
+            - group [ref=f2e23]:
+              - generic [aria-hidden] [ref=f2e25] [cursor=pointer]: "["
+      - main [ref=f2e26]:
+        - generic [ref=f2e27]:
+          - navigation "مسیر" [ref=f2e28]:
+            - list [ref=f2e29]:
+              - listitem [ref=f2e30]:
+                - link "داشبورد" [ref=f2e31] [cursor=pointer]:
+                  - /url: /dashboard
+                - generic [aria-hidden] [ref=f2e32]: /
+              - listitem [ref=f2e33]:
+                - generic [ref=f2e34]: مدیریت سامانه
+                - generic [aria-hidden] [ref=f2e35]: /
+              - listitem [ref=f2e36]:
+                - generic [ref=f2e37]: گردش‌کارها
+          - generic [ref=f2e39]:
+            - heading "گردش‌کارها" [level=1] [ref=f2e40]
+            - paragraph [ref=f2e41]: تعریف مرحله‌ها و انتقال‌ها؛ مرجع تصمیم‌گیری سامانه دادهٔ گردش‌کار است، نه کد ثابت.
+          - generic [ref=f2e42]:
+            - heading "تعریف‌ها" [level=2] [ref=f2e43]
+            - list [ref=f2e44]:
+              - listitem [ref=f2e45]:
+                - generic [ref=f2e46]:
+                  - paragraph [ref=f2e47]: گردش‌کار هستهٔ پرونده (۷ وضعیت)
+                  - paragraph [ref=f2e48]: "thesis_case_core · v۲ · نمونه‌های باز: ۰"
+                - generic [ref=f2e49]:
+                  - generic [ref=f2e50]: پیش‌نویس
+                  - link "مشاهده" [ref=f2e51] [cursor=pointer]:
+                    - /url: /admin/workflows?id=5
+              - listitem [ref=f2e52]:
+                - generic [ref=f2e53]:
+                  - paragraph [ref=f2e54]: گردش‌کار هستهٔ پرونده (۷ وضعیت)
+                  - paragraph [ref=f2e55]: "thesis_case_core · v۱ · نمونه‌های باز: ۴"
+                - generic [ref=f2e56]:
+                  - generic [ref=f2e57]: منتشرشده
+                  - link "مشاهده" [ref=f2e58] [cursor=pointer]:
+                    - /url: /admin/workflows?id=1
+              - listitem [ref=f2e59]:
+                - generic [ref=f2e60]:
+                  - paragraph [ref=f2e61]: چرخهٔ کامل پایان‌نامه (پیشنهاد اولیه — نیازمند تأیید دانشگاه)
+                  - paragraph [ref=f2e62]: "thesis_full_cycle · v۱ · نمونه‌های باز: ۰"
+                - generic [ref=f2e63]:
+                  - generic [ref=f2e64]: پیش‌نویس
+                  - generic [ref=f2e65]: نیازمند تأیید دانشگاه
+                  - link "مشاهده" [ref=f2e66] [cursor=pointer]:
+                    - /url: /admin/workflows?id=2
+          - generic [ref=f2e67]:
+            - heading "تاریخچهٔ نسخه‌ها" [level=2] [ref=f2e68]
+            - list [ref=f2e69]:
+              - listitem [ref=f2e71]:
+                - generic [ref=f2e73]:
+                  - paragraph [ref=f2e74]: نسخه ۲ — پیش‌نویس
+                  - time [ref=f2e75]: ۲۵ مهر ۱۴۰۵ ساعت ۱۶:۱۴
+                - paragraph [ref=f2e76]: گردش‌کار هستهٔ پرونده (۷ وضعیت)
+              - listitem [ref=f2e77]:
+                - generic [ref=f2e79]:
+                  - paragraph [ref=f2e80]: نسخه ۱ — منتشرشده
+                  - time [ref=f2e81]: ۲۵ مهر ۱۴۰۵ ساعت ۱۶:۱۲
+                - paragraph [ref=f2e82]: گردش‌کار هستهٔ پرونده (۷ وضعیت)
+          - generic [ref=f2e83]:
+            - region "پیش‌نویس ← اعتبارسنجی ← انتشار" [ref=f2e84]:
+              - generic [ref=f2e85]:
+                - generic [ref=f2e86]:
+                  - paragraph [ref=f2e87]: پیش‌نویس ← اعتبارسنجی ← انتشار
+                  - generic [ref=f2e88]:
+                    - strong [ref=f2e89]: گردش‌کار هستهٔ پرونده (۷ وضعیت)
+                    - generic [ref=f2e90]: نسخه ۱
+                    - generic [ref=f2e91]: منتشرشده
+                    - generic [ref=f2e92]: ۱ تغییر ذخیره‌نشده
+                - button "ذخیرهٔ پیش‌نویس" [ref=f2e93]
+                - button "اعتبارسنجی" [ref=f2e98]
+                - button "انتشار" [ref=f2e102]
+            - status [ref=f2e108]:
+              - generic [ref=f2e109]: ابتدا پیش‌نویس را ذخیره کنید، سپس اعتبارسنجی و در پایان منتشر کنید.
+            - generic [ref=f2e110]:
+              - generic [ref=f2e111]:
+                - heading "نمودار مراحل و اقدام‌های بین آن‌ها" [level=3] [ref=f2e112]
+                - generic [ref=f2e113]: thesis_case_core
+              - img "نمودار مراحل و اقدام‌های بین آن‌ها" [ref=f2e115]:
+                - generic [ref=f2e116]:
+                  - generic [ref=f2e118]: مرحله آزمون 17922
+                  - generic [ref=f2e119]: draft
+                  - generic [ref=f2e120]: 1 انتقال‌ها
+                - generic [ref=f2e121]:
+                  - generic [ref=f2e123]: ثبت‌شده برای بررس
+                  - generic [ref=f2e124]: submitted
+                  - generic [ref=f2e125]: 4 انتقال‌ها
+                - generic [ref=f2e126]:
+                  - generic [ref=f2e128]: در حال بررسی
+                  - generic [ref=f2e129]: under_review
+                  - generic [ref=f2e130]: 3 انتقال‌ها
+                - generic [ref=f2e131]:
+                  - generic [ref=f2e133]: نیازمند اصلاح
+                  - generic [ref=f2e134]: revision_required
+                  - generic [ref=f2e135]: 3 انتقال‌ها
+                - generic [ref=f2e136]:
+                  - generic [ref=f2e138]: تأییدشده
+                  - generic [ref=f2e139]: approved
+                  - generic [ref=f2e140]: 1 انتقال‌ها
+                - generic [ref=f2e141]:
+                  - generic [ref=f2e143]: ردشده
+                  - generic [ref=f2e144]: rejected
+                  - generic [ref=f2e145]: 1 انتقال‌ها
+                - generic [ref=f2e146]:
+                  - generic [ref=f2e148]: بایگانی‌شده
+                  - generic [ref=f2e149]: archived
+                  - generic [ref=f2e150]: 0 انتقال‌ها
+            - status [ref=f2e151]:
+              - generic [ref=f2e152]: گراف معتبر است.
+            - generic [ref=f2e153]:
+              - generic [ref=f2e154]:
+                - heading "مرحله‌ها" [level=3] [ref=f2e155]
+                - button "افزودن مرحله" [ref=f2e156]
+              - generic [ref=f2e157]:
+                - group [ref=f2e158]:
+                  - generic "۱ مرحله آزمون 1792241072097 draft" [ref=f2e159] [cursor=pointer]:
+                    - generic [ref=f2e160]: ۱
+                    - text: مرحله آزمون 1792241072097
+                    - code [ref=f2e161]: draft
+                  - generic [ref=f2e162]:
+                    - generic [ref=f2e163]:
+                      - generic [ref=f2e164]: کلید مرحله
+                      - textbox "کلید مرحله" [ref=f2e165]: draft
+                    - generic [ref=f2e166]:
+                      - generic [ref=f2e167]: عنوان مرحله
+                      - textbox "عنوان مرحله" [active] [ref=f2e168]: مرحله آزمون 1792241072097
+                    - switch "آغازین" [checked] [ref=f2e169]
+                    - switch "پایانی" [ref=f2e171]
+                    - button "حذف" [ref=f2e173]
+                - group [ref=f2e177]:
+                  - generic "۲ ثبت‌شده برای بررسی submitted" [ref=f2e178] [cursor=pointer]:
+                    - generic [ref=f2e179]: ۲
+                    - text: ثبت‌شده برای بررسی
+                    - code [ref=f2e180]: submitted
+                - group [ref=f2e181]:
+                  - generic "۳ در حال بررسی under_review" [ref=f2e182] [cursor=pointer]:
+                    - generic [ref=f2e183]: ۳
+                    - text: در حال بررسی
+                    - code [ref=f2e184]: under_review
+                - group [ref=f2e185]:
+                  - generic "۴ نیازمند اصلاح revision_required" [ref=f2e186] [cursor=pointer]:
+                    - generic [ref=f2e187]: ۴
+                    - text: نیازمند اصلاح
+                    - code [ref=f2e188]: revision_required
+                - group [ref=f2e189]:
+                  - generic "۵ تأییدشده approved" [ref=f2e190] [cursor=pointer]:
+                    - generic [ref=f2e191]: ۵
+                    - text: تأییدشده
+                    - code [ref=f2e192]: approved
+                - group [ref=f2e193]:
+                  - generic "۶ ردشده rejected" [ref=f2e194] [cursor=pointer]:
+                    - generic [ref=f2e195]: ۶
+                    - text: ردشده
+                    - code [ref=f2e196]: rejected
+                - group [ref=f2e197]:
+                  - generic "۷ بایگانی‌شده archived" [ref=f2e198] [cursor=pointer]:
+                    - generic [ref=f2e199]: ۷
+                    - text: بایگانی‌شده
+                    - code [ref=f2e200]: archived
+            - generic [ref=f2e201]:
+              - generic [ref=f2e202]:
+                - heading "انتقال‌ها" [level=3] [ref=f2e203]
+                - button "افزودن انتقال" [ref=f2e204]
+              - generic [ref=f2e205]:
+                - group [ref=f2e206]:
+                  - generic "ارسال برای بررسی ثبت‌شده برای بررسی" [ref=f2e207] [cursor=pointer]:
+                    - generic [ref=f2e208]: ارسال برای بررسی
+                    - generic [ref=f2e211]: ثبت‌شده برای بررسی
+                  - option "مرحله آزمون 1792241072097" [selected]
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی" [selected]
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic" [selected]
+                  - option "cases.review_topic"
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—"
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی" [selected]
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e212]:
+                  - generic "شروع بررسی در حال بررسی" [ref=f2e213] [cursor=pointer]:
+                    - generic [ref=f2e214]: شروع بررسی
+                    - generic [ref=f2e217]: در حال بررسی
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی" [selected]
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی" [selected]
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—"
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی" [selected]
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e218]:
+                  - generic "نیاز به اصلاح نیازمند اصلاح" [ref=f2e219] [cursor=pointer]:
+                    - generic [ref=f2e220]: نیاز به اصلاح
+                    - generic [ref=f2e223]: نیازمند اصلاح
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی" [selected]
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح" [selected]
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e224]:
+                  - generic "تأیید تأییدشده" [ref=f2e225] [cursor=pointer]:
+                    - generic [ref=f2e226]: تأیید
+                    - generic [ref=f2e229]: تأییدشده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی" [selected]
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده" [selected]
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e230]:
+                  - generic "رد ردشده" [ref=f2e231] [cursor=pointer]:
+                    - generic [ref=f2e232]: رد
+                    - generic [ref=f2e235]: ردشده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی" [selected]
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده" [selected]
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e236]:
+                  - generic "نیاز به اصلاح نیازمند اصلاح" [ref=f2e237] [cursor=pointer]:
+                    - generic [ref=f2e238]: نیاز به اصلاح
+                    - generic [ref=f2e241]: نیازمند اصلاح
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی" [selected]
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح" [selected]
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e242]:
+                  - generic "تأیید تأییدشده" [ref=f2e243] [cursor=pointer]:
+                    - generic [ref=f2e244]: تأیید
+                    - generic [ref=f2e247]: تأییدشده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی" [selected]
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده" [selected]
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e248]:
+                  - generic "رد ردشده" [ref=f2e249] [cursor=pointer]:
+                    - generic [ref=f2e250]: رد
+                    - generic [ref=f2e253]: ردشده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی" [selected]
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده" [selected]
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e254]:
+                  - generic "ارسال مجدد پس از اصلاح ثبت‌شده برای بررسی" [ref=f2e255] [cursor=pointer]:
+                    - generic [ref=f2e256]: ارسال مجدد پس از اصلاح
+                    - generic [ref=f2e259]: ثبت‌شده برای بررسی
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح" [selected]
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی" [selected]
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic" [selected]
+                  - option "cases.review_topic"
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—"
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی" [selected]
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e260]:
+                  - generic "تأیید تأییدشده" [ref=f2e261] [cursor=pointer]:
+                    - generic [ref=f2e262]: تأیید
+                    - generic [ref=f2e265]: تأییدشده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح" [selected]
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده" [selected]
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e266]:
+                  - generic "رد ردشده" [ref=f2e267] [cursor=pointer]:
+                    - generic [ref=f2e268]: رد
+                    - generic [ref=f2e271]: ردشده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح" [selected]
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده" [selected]
+                  - option "بایگانی‌شده"
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic" [selected]
+                  - option "cases.transition_status"
+                  - option "cases.archive"
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e272]:
+                  - generic "بایگانی بایگانی‌شده" [ref=f2e273] [cursor=pointer]:
+                    - generic [ref=f2e274]: بایگانی
+                    - generic [ref=f2e277]: بایگانی‌شده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده" [selected]
+                  - option "ردشده"
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده" [selected]
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic"
+                  - option "cases.transition_status"
+                  - option "cases.archive" [selected]
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+                - group [ref=f2e278]:
+                  - generic "بایگانی بایگانی‌شده" [ref=f2e279] [cursor=pointer]:
+                    - generic [ref=f2e280]: بایگانی
+                    - generic [ref=f2e283]: بایگانی‌شده
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده" [selected]
+                  - option "بایگانی‌شده"
+                  - option "مرحله آزمون 1792241072097"
+                  - option "ثبت‌شده برای بررسی"
+                  - option "در حال بررسی"
+                  - option "نیازمند اصلاح"
+                  - option "تأییدشده"
+                  - option "ردشده"
+                  - option "بایگانی‌شده" [selected]
+                  - option "—"
+                  - option "dashboard.view"
+                  - option "users.view"
+                  - option "users.manage"
+                  - option "roles.view"
+                  - option "roles.manage"
+                  - option "audit.view"
+                  - option "settings.view"
+                  - option "settings.manage"
+                  - option "system.design"
+                  - option "org.view"
+                  - option "org.manage"
+                  - option "workflow.view"
+                  - option "workflow.manage"
+                  - option "cases.edit_metadata"
+                  - option "cases.view_own"
+                  - option "cases.view_assigned"
+                  - option "cases.view_department"
+                  - option "cases.view_all"
+                  - option "cases.create"
+                  - option "cases.update_own_draft"
+                  - option "cases.update_assigned"
+                  - option "cases.assign_supervisors"
+                  - option "cases.submit_topic"
+                  - option "cases.review_topic"
+                  - option "cases.transition_status"
+                  - option "cases.archive" [selected]
+                  - option "cases.events.view"
+                  - option "cases.files.upload"
+                  - option "cases.files.download"
+                  - option "cases.approve_topic_group"
+                  - option "cases.submit_literature"
+                  - option "forms.view"
+                  - option "forms.manage"
+                  - option "—" [selected]
+                  - option "دانشجو"
+                  - option "استاد راهنما"
+                  - option "استاد مشاور"
+                  - option "مدیر گروه"
+                  - option "تحصیلات تکمیلی"
+                  - option "امور مالی"
+                  - option "داور"
+                  - option "مسئول فارغ‌التحصیلی"
+                  - option "مدیر سیستم"
+      - contentinfo [ref=f2e284]:
+        - generic [ref=f2e286]:
+          - img "لوگوی دانشگاه شمال" [ref=f2e288]
+          - generic [ref=f2e289]:
+            - paragraph [ref=f2e290]: © ۱۴۰۵ دانشگاه شمال، معاونت پژوهش و فناوری — کلیه حقوق محفوظ است.
+            - paragraph [ref=f2e291]:
+              - text: "طراحی و توسعه:"
+              - link "پارامیس تک" [ref=f2e292] [cursor=pointer]:
+                - /url: https://paramistech.ir/
+  - alert [ref=f2e293]
+```
